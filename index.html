@@ -1,0 +1,2238 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>역사 탐험대: 삼국·가야 퀘스트</title>
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Noto+Serif+KR:wght@400;700;900&family=DotGothic16&family=Press+Start+2P&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'Jua',sans-serif;background:#0a1a0a;color:#1a1a1a;touch-action:manipulation;overscroll-behavior:none;}
+button{font-family:'Jua',sans-serif;}
+
+/* ── 화면 전환 ── */
+.screen{position:absolute;inset:0;display:none;overflow:hidden;}
+.screen.active{display:block;}
+
+/* ── 시작화면 — 도트 픽셀아트 배경 ── */
+#startScreen{
+  background:#1a6ab0;
+  position:relative;overflow:hidden;
+}
+#titleBgCanvas{
+  position:absolute;inset:0;width:100%;height:100%;
+  display:block;image-rendering:pixelated;
+  image-rendering:crisp-edges;
+  z-index:0;
+}
+
+/* 바닥 잔디 — 캔버스로 대체하므로 숨김 */
+.start-grass{ display:none; }
+
+.start-ui{
+  position:relative;z-index:20;height:100%;
+  display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  padding:clamp(12px,4vw,24px) 16px 0;gap:0;
+}
+
+/* 나라 배지 — 작은 픽셀 태그 */
+.nation-tags{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:clamp(8px,2vw,14px);position:relative;z-index:3;}
+.ntag{
+  background:linear-gradient(180deg,#fce080,#e0b040);
+  border:3px solid #b07820;
+  border-radius:0;padding:4px 10px;
+  font-size:clamp(13px,3vw,15px);color:#5a2000;
+  font-family:'Press Start 2P','DotGothic16',sans-serif;
+  font-weight:900;letter-spacing:0px;word-spacing:-4px;
+  box-shadow:2px 2px 0 #7a4800, inset 0 1px 0 rgba(255,255,210,0.5);
+  image-rendering:pixelated;
+  animation:bob 2.4s ease-in-out infinite;
+}
+.ntag:nth-child(2){animation-delay:.3s;}
+.ntag:nth-child(3){animation-delay:.6s;}
+.ntag:nth-child(4){animation-delay:.9s;}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+
+/* ── 나무 간판 (메인 타이틀) ── */
+.sign-wrap{
+  position:relative;z-index:3;
+  width:min(480px,94vw);
+  margin-bottom:clamp(10px,3vw,18px);
+}
+.sign-board{
+  background:linear-gradient(180deg,#fce080 0%,#ecc050 40%,#d8a038 70%,#ecc050 100%);
+  border:5px solid #b07820;
+  border-radius:6px;
+  padding:clamp(8px,2vw,14px) clamp(16px,4vw,28px) clamp(14px,3vw,22px);
+  position:relative;
+  box-shadow:
+    4px 4px 0 #5a3000,
+    8px 8px 0 rgba(0,0,0,0.25),
+    inset 0 2px 0 rgba(255,255,200,0.35),
+    inset 0 -2px 0 rgba(0,0,0,0.15);
+  image-rendering:pixelated;
+}
+/* 나무 결 */
+.sign-board::before{
+  content:'';position:absolute;inset:6px;
+  background:repeating-linear-gradient(180deg,
+    transparent 0px,transparent 10px,
+    rgba(160,100,20,0.12) 10px,rgba(160,100,20,0.12) 12px);
+  pointer-events:none;
+}
+/* 코너 나사 */
+.sign-board::after{
+  content:'●  ●';
+  position:absolute;top:6px;left:0;right:0;
+  display:flex;justify-content:space-between;padding:0 8px;
+  font-size:10px;color:#5a3000;letter-spacing:0;
+  pointer-events:none;
+}
+/* 코너 리벳 (4개) */
+.sign-rivet{position:absolute;width:12px;height:12px;
+  background:radial-gradient(circle at 35% 35%,#e8c050,#a07020);
+  border:2px solid #5a3000;border-radius:50%;}
+.sign-rivet.tl{top:6px;left:6px;}
+.sign-rivet.tr{top:6px;right:6px;}
+.sign-rivet.bl{bottom:6px;left:6px;}
+.sign-rivet.br{bottom:6px;right:6px;}
+
+.title-prefix{
+  display:inline-block;
+  font-family:'Jua',sans-serif;
+  font-size:clamp(13px,3.2vw,20px);
+  font-weight:900;
+  color:#8a2800;
+  background:#fffbe8;
+  border:2px solid #b07820;
+  border-radius:12px 12px 12px 2px;
+  padding:4px 10px;
+  box-shadow:2px 2px 0 #7a4800;
+  position:absolute;
+  top:-8px;
+  left:38px;
+  transform:rotate(-6deg);
+  transform-origin:left bottom;
+  z-index:4;
+  letter-spacing:1px;
+  text-shadow:none;
+  white-space:nowrap;
+}
+.title-prefix::after{
+  content:'';
+  position:absolute;
+  bottom:-8px;left:10px;
+  width:0;height:0;
+  border-left:8px solid transparent;
+  border-right:4px solid transparent;
+  border-top:8px solid #b07820;
+}
+.title-prefix::before{
+  content:'';
+  position:absolute;
+  bottom:-5px;left:11px;
+  width:0;height:0;
+  border-left:7px solid transparent;
+  border-right:3px solid transparent;
+  border-top:7px solid #fffbe8;
+  z-index:1;
+}
+.game-title{
+  font-family:'Jua',sans-serif;
+  font-size:clamp(32px,9vw,62px);
+  font-weight:900;
+  color:#8a2800;
+  text-align:center;
+  line-height:1.2;
+  margin:0;
+  width:100%;
+  text-shadow:
+    3px 3px 0 #fce880,
+    5px 5px 0 #5a1400,
+    -1px -1px 0 rgba(255,230,140,0.6);
+  position:relative;z-index:1;
+}
+.title-sub-kr{
+  font-family:'Press Start 2P','DotGothic16',sans-serif;
+  font-size:clamp(11px,2.8vw,16px);
+  color:#6a2800;text-align:center;
+  letter-spacing:4px;margin-top:4px;
+  text-shadow:1px 1px 0 rgba(255,220,120,0.6);
+  position:relative;z-index:1;
+}
+
+/* 체인 */
+.sign-chain{
+  display:flex;justify-content:space-between;padding:0 20px;
+  margin-bottom:0;
+}
+.sign-chain span{
+  display:block;width:4px;height:clamp(8px,2vw,14px);
+  background:repeating-linear-gradient(180deg,#8a6020 0px,#8a6020 4px,#c8a040 4px,#c8a040 8px);
+  image-rendering:pixelated;
+}
+
+/* 미션 목록 */
+.mission-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:6px;
+  margin-bottom:clamp(10px,2.5vw,16px);
+  width:min(480px,94vw);position:relative;z-index:3;
+}
+.mq{
+  background:linear-gradient(180deg,#fce080,#eab840);
+  border:3px solid #b07820;
+  border-radius:0;padding:8px 10px;
+  font-size:clamp(12px,2.4vw,15px);
+  line-height:1.6;color:#5a2000;
+  font-family:'DotGothic16',sans-serif;
+  box-shadow:2px 2px 0 #7a4800;
+  image-rendering:pixelated;
+}
+.mq strong{color:#881800;font-size:clamp(13px,2.6vw,16px);}
+.mq-title{font-weight:900;font-size:clamp(14px,2.8vw,17px);color:#5a1000;}
+
+/* 버튼 — 나무 버튼 스타일 */
+.start-btns{
+  display:flex;gap:10px;justify-content:center;
+  flex-wrap:wrap;position:relative;z-index:3;
+}
+.btn-start{
+  background:linear-gradient(180deg,#fce080,#e0a830,#c08020);
+  color:#601800;
+  border:3px solid #904808;
+  border-radius:0;
+  padding:13px 26px;
+  font-size:clamp(16px,3.8vw,22px);
+  font-family:'Press Start 2P','DotGothic16',sans-serif;
+  font-weight:900;
+  cursor:pointer;
+  min-height:54px;min-width:120px;
+  letter-spacing:2px;word-spacing:-4px;
+  text-shadow:2px 2px 0 rgba(255,220,100,0.7);
+  box-shadow:4px 4px 0 #5a2800, inset 0 1px 0 rgba(255,255,200,0.5);
+  touch-action:manipulation;-webkit-touch-callout:none;
+  user-select:none;-webkit-user-select:none;
+  image-rendering:pixelated;
+  transition:transform 0.06s,box-shadow 0.06s;
+}
+.btn-start:active{transform:translate(3px,3px);box-shadow:0 0 0 #6a3800;}
+
+.btn-help{
+  background:linear-gradient(180deg,#fce080,#e0a830,#c08020);
+  color:#601800;
+  border:3px solid #904808;
+  border-radius:0;
+  padding:13px 26px;
+  font-size:clamp(16px,3.8vw,22px);
+  font-family:'Press Start 2P','DotGothic16',sans-serif;
+  font-weight:900;
+  cursor:pointer;min-height:54px;min-width:120px;
+  letter-spacing:2px;word-spacing:-4px;
+  text-shadow:2px 2px 0 rgba(255,220,100,0.7);
+  box-shadow:4px 4px 0 #5a2800, inset 0 1px 0 rgba(255,255,200,0.5);
+  touch-action:manipulation;-webkit-touch-callout:none;
+  user-select:none;-webkit-user-select:none;
+  image-rendering:pixelated;
+  transition:transform 0.06s,box-shadow 0.06s;
+}
+.btn-help:active{transform:translate(3px,3px);box-shadow:0 0 0 #6a3800;}
+
+.start-footer{
+  margin-top:10px;position:relative;z-index:3;
+  font-family:'Press Start 2P','DotGothic16',sans-serif;
+  font-size:11px;color:rgba(90,35,5,0.85);
+  letter-spacing:2px;
+}
+
+/* ── 게임화면 ── */
+#gameScreen{background:#3a6e22;}
+#gameCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;image-rendering:pixelated;}
+
+/* ── HUD — 나무 판자 ── */
+.hud{position:absolute;top:8px;left:8px;right:8px;display:grid;grid-template-columns:1fr auto;gap:8px;z-index:10;pointer-events:none;}
+.hud-panel{
+  background:linear-gradient(180deg,#fce080,#e8b840);
+  border:3px solid #b07820;border-radius:0;
+  padding:8px 12px;pointer-events:auto;
+  box-shadow:3px 3px 0 #6a3800;
+  position:relative;overflow:hidden;
+}
+.hud-panel::before{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(180deg,transparent 0,transparent 8px,rgba(160,100,20,0.10) 8px,rgba(160,100,20,0.10) 9px);
+  pointer-events:none;
+}
+.hud-goal{font-size:clamp(13px,2.8vw,16px);color:#601800;line-height:1.4;font-family:'DotGothic16',sans-serif;font-weight:900;position:relative;}
+.hud-right{display:flex;flex-direction:column;gap:6px;pointer-events:auto;}
+
+/* 조각 (별) */
+.frag-row{display:flex;gap:4px;}
+.frag{width:24px;height:24px;border-radius:0;background:#c09030;border:2px solid #8a5a10;box-shadow:2px 2px 0 #5a3000;}
+.frag.on{background:linear-gradient(180deg,#ffe878,#ffcc00);border-color:#b07820;box-shadow:2px 2px 0 #7a4000,0 0 8px rgba(255,200,0,0.6);}
+
+/* 음소거 버튼 */
+.btn-mute{
+  background:linear-gradient(180deg,#ecc050,#c89030);
+  border:2px solid #b07820;border-radius:0;
+  padding:4px 8px;font-size:12px;
+  font-family:'DotGothic16',sans-serif;
+  cursor:pointer;min-height:30px;color:#601800;
+  box-shadow:2px 2px 0 #6a3800;
+  touch-action:manipulation;
+}
+.btn-mute:active{transform:translate(2px,2px);box-shadow:0 0 0 #6a3800;}
+
+/* 퀘스트 칩 */
+.quest-chips{display:flex;flex-direction:column;gap:3px;margin-top:4px;position:relative;}
+.qchip{
+  font-size:13px;font-weight:700;display:flex;justify-content:space-between;align-items:center;
+  padding:4px 8px;
+  background:rgba(210,150,30,0.35);
+  border:1px solid #b07820;border-radius:0;
+  color:#601800;font-family:'DotGothic16',sans-serif;
+}
+.qchip.done{background:rgba(100,200,80,0.30);border-color:#4a8a2a;color:#1a4a10;}
+
+/* 팁 바 — 나무 판자 */
+.tip{
+  position:absolute;bottom:10px;left:50%;transform:translateX(-50%);
+  background:linear-gradient(180deg,#fce080,#e8b840);
+  border:3px solid #b07820;border-radius:0;
+  padding:8px 16px;
+  font-size:clamp(11px,2.2vw,14px);
+  font-family:'DotGothic16',sans-serif;
+  color:#601800;font-weight:700;
+  white-space:nowrap;z-index:10;
+  max-width:95vw;overflow:hidden;text-overflow:ellipsis;
+  box-shadow:3px 3px 0 #6a3800;
+}
+
+/* ── 모달 — 나무 판자 ── */
+.overlay{position:absolute;inset:0;background:rgba(30,10,0,0.72);display:none;align-items:center;justify-content:center;padding:12px;z-index:30;overflow-y:auto;}
+.overlay.show{display:flex;}
+.modal{
+  background:linear-gradient(180deg,#fce080 0%,#ecc050 3%,#f5d868 6%,#ecd060 100%);
+  border:4px solid #b07820;border-radius:0;
+  padding:16px;width:min(600px,96vw);max-height:88vh;
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  box-shadow:5px 5px 0 #5a2800, 0 12px 32px rgba(0,0,0,0.5);
+  position:relative;
+}
+/* 나무결 */
+.modal::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(180deg,transparent 0,transparent 12px,rgba(160,100,20,0.08) 12px,rgba(160,100,20,0.08) 13px);
+}
+.modal-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;position:relative;}
+.modal-title{
+  font-size:clamp(16px,3.8vw,22px);
+  color:#601800;line-height:1.3;
+  font-family:'DotGothic16',sans-serif;font-weight:700;
+  text-shadow:1px 1px 0 rgba(255,220,100,0.5);
+}
+.modal-sub{font-size:12px;color:#8a4810;margin-top:2px;font-family:'DotGothic16',sans-serif;}
+
+/* 닫기 버튼 */
+.btn-close{
+  background:linear-gradient(180deg,#ecc050,#c89030);
+  border:2px solid #b07820;border-radius:0;
+  width:34px;height:34px;font-size:16px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;margin-left:8px;touch-action:manipulation;
+  color:#601800;font-weight:900;
+  box-shadow:2px 2px 0 #6a3800;
+}
+.btn-close:active{transform:translate(2px,2px);box-shadow:0 0 0 #6a3800;}
+
+/* NPC 말풍선 */
+.npc-box{
+  background:linear-gradient(180deg,#fffbe8,#fef5d0);
+  border:2px solid #c09030;border-radius:0;
+  padding:12px;font-size:clamp(13px,2.5vw,15px);
+  line-height:1.7;margin-bottom:12px;
+  color:#5a2800;word-break:keep-all;
+  box-shadow:2px 2px 0 #8a5010;
+  font-family:'DotGothic16',sans-serif;
+  position:relative;
+}
+
+/* 문제 제목 */
+.q-title{
+  font-size:clamp(14px,3.2vw,18px);font-weight:700;
+  color:#601800;margin-bottom:12px;line-height:1.5;
+  word-break:keep-all;font-family:'DotGothic16',sans-serif;
+  text-shadow:1px 1px 0 rgba(255,220,100,0.4);
+}
+
+/* 선택지 버튼 */
+.choices{display:flex;flex-direction:column;gap:8px;}
+.choice-btn{
+  background:linear-gradient(180deg,#fffbe8,#fef0c0);
+  border:2px solid #c09030;border-radius:0;
+  padding:12px 14px;font-size:clamp(13px,2.8vw,16px);
+  font-family:'DotGothic16',sans-serif;
+  text-align:left;cursor:pointer;min-height:48px;
+  color:#5a2800;box-shadow:2px 2px 0 #8a5010;
+  touch-action:manipulation;
+}
+.choice-btn:active{transform:translate(2px,2px);box-shadow:0 0 0 #8a5010;background:#fce890;}
+
+/* 피드백 */
+.feedback{margin-top:12px;padding:12px;border-radius:0;font-size:clamp(13px,2.5vw,15px);display:none;word-break:keep-all;line-height:1.5;font-family:'DotGothic16',sans-serif;}
+.feedback.ok{display:block;background:linear-gradient(180deg,#e0f8d0,#c8eca0);border:3px solid #4a8a2a;color:#1a4a10;box-shadow:2px 2px 0 #2a6010;}
+.feedback.ng{display:block;background:linear-gradient(180deg,#ffe8e0,#ffc8b0);border:3px solid #c04030;color:#6a0000;box-shadow:2px 2px 0 #8a2010;}
+
+/* 모달 버튼들 */
+.modal-btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;}
+.btn-modal-ok{
+  background:linear-gradient(180deg,#fce080,#e0a830,#c08020);
+  color:#601800;border:3px solid #904808;border-radius:0;
+  padding:12px 22px;font-size:clamp(13px,2.8vw,16px);
+  font-family:'DotGothic16',sans-serif;font-weight:700;
+  cursor:pointer;min-height:46px;
+  box-shadow:3px 3px 0 #5a2800;touch-action:manipulation;
+  text-shadow:1px 1px 0 rgba(255,220,100,0.5);
+}
+.btn-modal-ok:active{transform:translate(3px,3px);box-shadow:0 0 0 #5a2800;}
+.btn-modal-sub{
+  background:linear-gradient(180deg,#d4a840,#b88828);
+  color:#601800;border:3px solid #8a5a10;border-radius:0;
+  padding:12px 18px;font-size:clamp(13px,2.8vw,16px);
+  font-family:'DotGothic16',sans-serif;font-weight:700;
+  cursor:pointer;min-height:46px;
+  box-shadow:3px 3px 0 #5a2800;touch-action:manipulation;
+}
+.btn-modal-sub:active{transform:translate(3px,3px);box-shadow:0 0 0 #5a2800;}
+
+/* ── 지도문제 ── */
+.minimap{width:100%;aspect-ratio:0.78;background:#fff;border-radius:0;border:3px solid #b07820;position:relative;overflow:hidden;margin-bottom:12px;box-shadow:3px 3px 0 #6a3800;}
+.region-btn{
+  position:absolute;
+  background:linear-gradient(180deg,#fce080,#e0a830);
+  border:2px solid #904808;border-radius:0;
+  padding:6px 12px;
+  font-family:'DotGothic16',sans-serif;font-size:clamp(12px,2.4vw,14px);
+  cursor:pointer;color:#601800;min-height:34px;
+  box-shadow:2px 2px 0 #5a2800;font-weight:700;
+  touch-action:manipulation;
+}
+.region-btn:active{transform:translate(2px,2px);box-shadow:0 0 0 #5a2800;}
+
+/* ── 연결문제 ── */
+.match-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.match-col h4{font-size:13px;color:#601800;margin-bottom:8px;text-align:center;font-family:'DotGothic16',sans-serif;font-weight:700;}
+.card-item{
+  background:linear-gradient(180deg,#fce080,#e8b840);
+  border:2px solid #b07820;border-radius:0;
+  padding:10px;font-size:clamp(12px,2.4vw,14px);
+  cursor:pointer;margin-bottom:6px;text-align:center;
+  min-height:46px;display:flex;align-items:center;justify-content:center;
+  color:#601800;box-shadow:2px 2px 0 #6a3800;
+  font-family:'DotGothic16',sans-serif;font-weight:700;
+  touch-action:manipulation;
+}
+.card-item.selected{outline:3px solid #ff6600;background:linear-gradient(180deg,#ffe060,#ffcc00);}
+.card-item.used{opacity:0.45;}
+.card-item:active{transform:translate(2px,2px);box-shadow:0 0 0 #6a3800;}
+.zone-item{
+  background:linear-gradient(180deg,#fffbe8,#fef0c0);
+  border:2px dashed #c09030;border-radius:0;
+  padding:10px;font-size:clamp(12px,2.4vw,14px);
+  cursor:pointer;margin-bottom:6px;text-align:center;
+  min-height:46px;display:flex;align-items:center;justify-content:center;
+  color:#7a4010;font-family:'DotGothic16',sans-serif;
+  touch-action:manipulation;
+}
+.zone-item.filled{background:linear-gradient(180deg,#d0f0b0,#b0e080);border:2px solid #4a8a2a;color:#1a4a10;}
+.zone-item:active{background:#fce890;}
+
+/* ── 결과화면 ── */
+#resultScreen{
+  background:linear-gradient(180deg,#50b8e8 0%,#84d0f0 40%,#c0e8a0 60%,#78d840 100%);
+  overflow-y:auto;padding:20px;
+}
+.result-card{
+  background:linear-gradient(180deg,#fce080,#ecc050);
+  border:4px solid #b07820;border-radius:0;
+  padding:20px;max-width:540px;margin:0 auto;
+  box-shadow:5px 5px 0 #5a2800;position:relative;overflow:hidden;
+}
+.result-card::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(180deg,transparent 0,transparent 12px,rgba(160,100,20,0.07) 12px,rgba(160,100,20,0.07) 13px);
+}
+.result-title{
+  font-size:clamp(18px,4.5vw,28px);color:#601800;
+  text-align:center;margin-bottom:8px;
+  font-family:'DotGothic16',sans-serif;font-weight:700;
+  text-shadow:2px 2px 0 rgba(255,220,100,0.5);
+  position:relative;
+}
+.result-sub{
+  font-size:clamp(12px,2.5vw,15px);color:#7a3800;
+  text-align:center;margin-bottom:16px;line-height:1.7;
+  word-break:keep-all;font-family:'DotGothic16',sans-serif;
+  position:relative;
+}
+.book{
+  background:linear-gradient(180deg,#fffbe8,#fef0c0);
+  border:3px solid #c09030;border-radius:0;
+  padding:16px;display:grid;grid-template-columns:1fr 1fr;
+  gap:8px;margin-bottom:14px;
+  box-shadow:3px 3px 0 #8a5010;position:relative;
+}
+.page{
+  background:rgba(255,255,255,0.75);
+  border:2px dashed #c09030;border-radius:0;
+  padding:10px;text-align:center;
+  font-size:clamp(11px,2.2vw,14px);color:#601800;
+  line-height:1.5;font-family:'DotGothic16',sans-serif;font-weight:700;
+}
+.summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.sum-item{
+  background:linear-gradient(180deg,#fffbe8,#fef5d8);
+  border:2px solid #c09030;border-radius:0;
+  padding:10px;font-size:clamp(11px,2vw,13px);
+  line-height:1.6;color:#5a2800;
+  font-family:'DotGothic16',sans-serif;
+  box-shadow:2px 2px 0 #8a5010;
+}
+
+/* ── 스파클 ── */
+.sparkle{position:fixed;width:12px;height:12px;border-radius:50%;background:radial-gradient(circle,#fff,#ffdd00 60%,transparent);pointer-events:none;animation:sp 0.9s linear forwards;z-index:999;}
+@keyframes sp{0%{transform:translateY(0) scale(0.5);opacity:1}100%{transform:translateY(-50px) scale(1.4);opacity:0}}
+
+@media(max-width:430px){
+  .mission-grid{grid-template-columns:1fr;}
+  .match-grid{grid-template-columns:1fr;}
+  .summary-grid{grid-template-columns:1fr;}
+  .book{grid-template-columns:1fr;}
+  .start-card{padding:14px;}
+}
+
+/* ── 팡파레 화면 ── */
+#fanfareScreen{position:fixed;inset:0;z-index:100;display:none;flex-direction:column;align-items:center;justify-content:center;background:rgba(0,0,0,0.82);}
+#fanfareScreen.show{display:flex;}
+.fanfare-card{background:linear-gradient(180deg,#fce080,#ecc050);border:4px solid #b07820;border-radius:0;padding:28px 24px;text-align:center;width:min(340px,90vw);box-shadow:5px 5px 0 #5a2800,0 0 40px rgba(255,200,0,0.4);position:relative;overflow:hidden;}
+.fanfare-emoji{font-size:64px;margin-bottom:8px;animation:pop 0.4s ease;}
+.fanfare-title{font-size:28px;font-family:'DotGothic16',sans-serif;font-weight:900;color:#601800;margin-bottom:6px;text-shadow:2px 2px 0 rgba(255,220,100,0.5);}
+.fanfare-sub{font-size:18px;font-family:'DotGothic16',sans-serif;font-weight:700;color:#7a3800;margin-bottom:16px;}
+.fanfare-stars{font-size:36px;letter-spacing:8px;animation:starPop 0.6s ease;}
+@keyframes pop{0%{transform:scale(0.3);opacity:0}70%{transform:scale(1.15)}100%{transform:scale(1);opacity:1}}
+@keyframes starPop{0%{opacity:0;transform:scale(0.5)}100%{opacity:1;transform:scale(1)}}
+.fanfare-confetti{position:absolute;width:10px;height:10px;border-radius:2px;animation:confettiFall 2.5s linear forwards;}
+@keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+</style>
+</head>
+<body>
+<div id="startScreen" class="screen active">
+  <canvas id="titleBgCanvas"></canvas>
+  <div class="start-ui">
+    <!-- 나라 배지 -->
+    <div class="nation-tags">
+      <span class="ntag">⚔ 고구려</span>
+      <span class="ntag">🛡 백제</span>
+      <span class="ntag">🌟 신라</span>
+      <span class="ntag">🏺 가야</span>
+    </div>
+    <!-- 나무 간판 타이틀 -->
+    <div class="sign-wrap">
+      <div class="sign-chain"><span></span><span></span></div>
+      <div class="sign-board">
+        <span class="sign-rivet tl"></span>
+        <span class="sign-rivet tr"></span>
+        <span class="sign-rivet bl"></span>
+        <span class="sign-rivet br"></span>
+        <span class="title-prefix">나는야</span>
+        <div class="game-title">역사 탐험가</div>
+      </div>
+    </div>
+    <!-- 미션 목록 -->
+    <div class="mission-grid">
+      <div class="mq"><strong>Q1.</strong> <span class="mq-title">나라의 탄생을 찾아라</span><br>건국 이야기 · 위치</div>
+      <div class="mq"><strong>Q2.</strong> <span class="mq-title">왕의 참모가 되어라</span><br>율령 · 왕권 · 중앙집권</div>
+      <div class="mq"><strong>Q3.</strong> <span class="mq-title">한강을 차지하라</span><br>전성기 · 지도 · 한강 유역</div>
+      <div class="mq"><strong>Q4.</strong> <span class="mq-title">유물의 주인을 밝혀라</span><br>유물 · 생활 모습</div>
+    </div>
+    <!-- 버튼 -->
+    <div class="start-btns">
+      <button class="btn-start" onclick="startGame()" ontouchstart="startGame()">🎮 게임시작</button>
+      <button class="btn-help" onclick="showHelp()" ontouchstart="showHelp()">❓ 조작방법</button>
+    </div>
+    <div class="start-footer">▸ 역사 기록 복원 작전 ◂</div>
+
+  </div>
+  <!-- 바닥 잔디 -->
+  <div class="start-grass"></div>
+</div>
+
+<div id="gameScreen" class="screen">
+  <canvas id="gameCanvas"></canvas>
+  <div class="hud">
+    <div class="hud-panel">
+      <div class="hud-goal" id="goalText">퀘스트 지점으로 이동하세요.</div>
+      <div class="quest-chips" id="questChips"></div>
+    </div>
+    <div class="hud-right">
+      <div class="frag-row" id="fragRow"></div>
+      <button class="btn-mute" onclick="toggleMute()" id="muteBtn">🔊</button>
+    </div>
+  </div>
+  <div class="tip" id="tip">화면을 터치해 캐릭터를 이동하세요</div>
+</div>
+
+<div id="resultScreen" class="screen">
+  <div class="result-card">
+    <div class="result-title">🏆 역사 복원 성공!</div>
+    <div class="result-sub">4개의 역사 기록 조각이 모두 모여<br>두루마리가 완성되었습니다!</div>
+    <div class="book">
+      <div class="page">📜 Q1<br>건국·위치</div>
+      <div class="page">📜 Q2<br>율령·왕권</div>
+      <div class="page">📜 Q3<br>전성기·한강</div>
+      <div class="page">📜 Q4<br>유물·생활</div>
+    </div>
+    <div class="summary-grid">
+      <div class="sum-item"><strong>① 나라의 성립</strong><br>고구려·백제·신라·가야는 각기 다른 지역에서 나라를 세웠습니다.</div>
+      <div class="sum-item"><strong>② 나라 다스리기</strong><br>율령을 만들고 왕의 힘을 키워 나라를 체계적으로 다스렸습니다.</div>
+      <div class="sum-item"><strong>③ 한강의 중요성</strong><br>한강 유역은 교통과 물자에 유리해 여러 나라가 중요하게 여겼습니다.</div>
+      <div class="sum-item"><strong>④ 유물과 생활</strong><br>유물은 그 시대 사람들의 생활과 문화를 알려 줍니다.</div>
+    </div>
+    <div style="text-align:center;">
+      <button class="btn-start" onclick="restartGame()" ontouchstart="restartGame()">🔄 다시하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 모달 -->
+<div id="fanfareScreen">
+</div>
+<div class="overlay" id="overlay" onclick="overlayClick(event)" ontouchstart="overlayClick(event)">
+  <div class="modal" id="modalBox"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// 상태
+// ═══════════════════════════════════════════
+const G = {
+  screen: 'start',
+  muted: false,
+  completedCount: 0,
+  popupLocked: false,
+  player: { x: 0.12, y: 0.78, tx: 0.12, ty: 0.78 },
+  walkTimer: 0,
+  drag: false,
+  inspectTimer: null,
+  inspectStartT: null,
+  quests: [
+    {
+      id:'q1', title:'Q1. 나라의 탄생을 찾아라', sub:'건국 이야기 · 위치',
+      npc:'지도 수호자', x:0.18, y:0.54, color:'#6f88ff', done:false, step:0,
+      qs:[
+        {type:'choice', q:'주몽의 건국 이야기와 관련 있는 나라는?',
+         c:['고구려','백제','신라'], a:0, fb:'맞아요! 주몽이 세운 나라는 고구려예요.'},
+        {type:'map', q:'고구려가 자리 잡고 성장한 위치를 눌러 보세요.',
+         a:'north', fb:'좋아요! 고구려는 북쪽 지역을 중심으로 성장했어요.'},
+        {type:'choice', q:'백제와 신라는 주로 어느 쪽에서 성장했을까요?',
+         c:['남쪽 지역','북쪽 지역','바다 한가운데'], a:0, fb:'정답! 백제와 신라는 남쪽 지역 중심이에요.'}
+      ]
+    },
+    {
+      id:'q2', title:'Q2. 왕의 참모가 되어라', sub:'율령 · 왕권 강화 · 중앙집권',
+      npc:'궁궐 기록관', x:0.78, y:0.52, color:'#8e69ff', done:false, step:0,
+      qs:[
+        {type:'choice', q:'율령을 만든 까닭으로 알맞은 것은?',
+         c:['나라를 법으로 다스리려고','춤 대회를 열려고','왕궁을 꾸미려고'], a:0, fb:'맞아요! 율령은 나라를 법으로 다스리기 위해 만들었어요.'},
+        {type:'truefalse', q:'왕권이 강해진다는 것은 왕이 나라를 이끄는 힘이 커진다는 뜻이에요.',
+         a:true, fb:'정답! 왕권 강화는 왕의 힘이 커지는 것이에요.'},
+        {type:'choice', q:'나라를 체계적으로 다스리는 흐름은?',
+         c:['통치 > 왕권 강화 > 율령 마련','율령 마련 > 왕권 강화 > 통치','축제 > 휴식 > 율령 마련'], a:1, fb:'좋아요! 왕권을 키우고 율령을 마련해 나라를 다스렸어요.'}
+      ]
+    },
+    {
+      id:'q3', title:'Q3. 한강을 차지하라', sub:'전성기 · 지도 · 한강 유역',
+      npc:'전략 안내자', x:0.22, y:0.82, color:'#2bb673', done:false, step:0,
+      qs:[
+        {type:'choice', q:'한강 유역이 중요한 까닭은?',
+         c:['교통과 물자 이동에 유리해서','항상 눈이 내려서','산이 없어서'], a:0, fb:'맞아요! 한강 유역은 교통과 물자에 유리한 요충지였어요.'},
+        {type:'map', q:'지도에서 한강 유역에 가장 가까운 곳을 눌러 보세요.',
+         a:'middle', fb:'좋아요! 한강 유역은 삼국이 중요하게 여긴 가운데 지역이에요.'},
+        {type:'choice', q:'삼국이 전성기에 중요한 지역을 차지하려 한 까닭은?',
+         c:['나라의 힘을 키우기 위해','바람 소리를 듣기 위해','낮잠을 자기 위해'], a:0, fb:'정답! 중요 지역을 차지하면 나라의 힘이 커졌어요.'}
+      ]
+    },
+    {
+      id:'q4', title:'Q4. 유물의 주인을 밝혀라', sub:'유물 · 생활 모습',
+      npc:'유물 연구원', x:0.76, y:0.82, color:'#ff9b45', done:false, step:0,
+      qs:[
+        {type:'match',
+         q:'유물 이름을 가장 알맞은 나라와 연결해 보세요. 유물 카드를 먼저 클릭한 뒤 나라 상자를 클릭하세요.',
+         pairs:[{label:'철기/토기',answer:'가야'},{label:'석굴암',answer:'신라'},{label:'고분 벽화',answer:'고구려'}],
+         targets:['고구려','신라','가야'],
+         fb:'잘했어요! 유물은 그 나라의 문화와 생활을 알려 줍니다.'},
+        {type:'choice', q:'유물을 통해 알 수 있는 것은?',
+         c:['옛사람들의 생활과 문화','내일의 날씨','게임 점수'], a:0, fb:'맞아요! 유물은 옛사람들의 생활과 문화를 알려 줍니다.'}
+      ]
+    }
+  ]
+};
+
+// ═══════════════════════════════════════════
+// 유틸
+// ═══════════════════════════════════════════
+function $(id){ return document.getElementById(id); }
+function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+function dist(ax,ay,bx,by){ return Math.sqrt((ax-bx)**2+(ay-by)**2); }
+function shuffle(arr){ const a=[...arr]; for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  $(name+'Screen').classList.add('active');
+  G.screen=name;
+}
+
+// ═══════════════════════════════════════════
+// 음악 (Web Audio)
+// ═══════════════════════════════════════════
+let AC=null, bgmTimer=null, quizTimer=null;
+let bgmOscs=[], quizOscs=[], bgmOn=false, quizOn=false;
+
+function getAC(){
+  if(!AC){ const C=window.AudioContext||window.webkitAudioContext; if(C) AC=new C(); }
+  if(AC && AC.state==='suspended') AC.resume();
+  return AC;
+}
+
+function makeRev(ac,s,d){
+  const len=ac.sampleRate*s, buf=ac.createBuffer(2,len,ac.sampleRate);
+  for(let c=0;c<2;c++){ const dd=buf.getChannelData(c); for(let i=0;i<len;i++) dd[i]=(Math.random()*2-1)*Math.pow(1-i/len,d); }
+  const cv=ac.createConvolver(); cv.buffer=buf; return cv;
+}
+
+function note(ac,dest,rev,f,t0,dur,vol,wave){
+  const o=ac.createOscillator(), g=ac.createGain();
+  o.type=wave; o.frequency.value=f;
+  const atk=Math.min(0.08,dur*0.12), rel=Math.min(0.25,dur*0.35);
+  g.gain.setValueAtTime(0.0001,t0);
+  g.gain.linearRampToValueAtTime(vol,t0+atk);
+  g.gain.setValueAtTime(vol,t0+dur-rel);
+  g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+  o.connect(g); g.connect(dest); if(rev) g.connect(rev);
+  o.start(t0); o.stop(t0+dur+0.1); return o;
+}
+
+function stopOscs(arr){ arr.forEach(o=>{ try{o.stop();}catch(e){} }); arr.length=0; }
+
+// 타이틀 BGM — 사극 오프닝 풍, 웅장하고 느림
+function playBGM(){
+  if(bgmOn||G.muted) return;
+  const ac=getAC(); if(!ac) return;
+  bgmOn=true;
+  const master=ac.createGain(); master.gain.value=0.26; master.connect(ac.destination);
+  const rev=makeRev(ac,4.0,1.6);
+  const rg=ac.createGain(); rg.gain.value=0.38; rev.connect(rg); rg.connect(master);
+  const now=ac.currentTime, B=60/56;
+  // G 궁조 멜로디 (대금 느낌)
+  const mel=[
+    [196,0,3,0.70],[220,3.5,1.5,0.60],[261.6,5.5,2.5,0.72],[293.7,8.5,2,0.75],
+    [329.6,11,3.5,0.78],[261.6,15,2,0.65],[293.7,18,2,0.72],[392,20.5,2.5,0.82],
+    [440,23.5,2,0.80],[523.3,26,3,0.88],[587.3,29.5,4,0.95],[523.3,34,1.5,0.82],
+    [440,36,2,0.75],[392,38.5,2,0.70],[329.6,41,2.5,0.60],[261.6,44,2,0.52],
+    [220,46.5,2.5,0.45],[196,49.5,6,0.50]
+  ];
+  // 가야금 화음
+  const harm=[
+    [98,0,8,0.28],[130.8,8,8,0.26],[146.8,16,6,0.30],[196,22,8,0.33],
+    [220,30,6,0.36],[196,36,7,0.28],[130.8,43,13,0.23]
+  ];
+  // 저음 드론
+  const drone=[[49,0,28,0.18],[65.4,28,28,0.20]];
+  // 장구 타점
+  const totalB=56;
+  mel.forEach(([f,t,d,v])=>{ bgmOscs.push(note(ac,master,rev,f,now+t*B,d*B,v*0.62,'triangle')); });
+  harm.forEach(([f,t,d,v])=>{ bgmOscs.push(note(ac,master,rg,f,now+t*B,d*B,v*0.48,'sine')); });
+  drone.forEach(([f,t,d,v])=>{ bgmOscs.push(note(ac,master,null,f,now+t*B,d*B,v*0.42,'sawtooth')); });
+  for(let i=0;i<totalB;i+=2){
+    const o=ac.createOscillator(),g=ac.createGain();
+    o.type='sawtooth'; o.frequency.value=i%4===0?90:110;
+    const pt=now+i*B;
+    g.gain.setValueAtTime(i%4===0?0.10:0.05,pt);
+    g.gain.exponentialRampToValueAtTime(0.0001,pt+0.10);
+    o.connect(g); g.connect(master); o.start(pt); o.stop(pt+0.12);
+    bgmOscs.push(o);
+  }
+  bgmTimer=setTimeout(()=>{ bgmOn=false; bgmOscs=[]; if(!G.muted) playBGM(); }, totalB*B*1000+500);
+}
+
+function stopBGM(){ bgmOn=false; clearTimeout(bgmTimer); stopOscs(bgmOscs); }
+
+// 퀴즈 BGM — 동물의숲 풍, 잔잔하고 밝음
+function playQuizBGM(){
+  if(quizOn||G.muted) return;
+  const ac=getAC(); if(!ac) return;
+  quizOn=true;
+  const master=ac.createGain(); master.gain.value=0.09; master.connect(ac.destination);
+  const rev=makeRev(ac,1.8,2.8);
+  const rg=ac.createGain(); rg.gain.value=0.28; rev.connect(rg); rg.connect(master);
+  const now=ac.currentTime, B=60/100;
+  // C 장조 실로폰 멜로디
+  const mel2=[
+    [523.3,0,0.8,0.70],[587.3,1,0.8,0.65],[659.3,2,0.8,0.72],[523.3,3,1.5,0.68],
+    [659.3,5,0.8,0.70],[698.5,6,0.8,0.72],[784,7,1.5,0.75],
+    [784,9,0.6,0.65],[698.5,10,0.6,0.60],[659.3,11,0.6,0.65],[587.3,12,0.6,0.60],[523.3,13,2,0.68],
+    [659.3,16,0.8,0.65],[784,17,0.8,0.70],[880,18,1.5,0.72],
+    [784,20,0.8,0.68],[698.5,21,0.8,0.62],[659.3,22,0.8,0.60],[523.3,23,2.5,0.65],
+    [587.3,26,0.8,0.58],[523.3,27,0.8,0.55],[493.9,28,0.8,0.52],[523.3,29,4,0.60]
+  ];
+  const harm2=[
+    [261.6,0,4,0.28],[329.6,0,4,0.22],[392,0,4,0.20],
+    [261.6,4,4,0.26],[349.2,4,4,0.20],[392,4,4,0.18],
+    [261.6,8,4,0.28],[329.6,8,4,0.22],[392,8,4,0.20],
+    [293.7,12,4,0.23],[349.2,12,4,0.18],
+    [440,16,4,0.26],[349.2,20,4,0.22],[261.6,24,9,0.26],[329.6,24,9,0.20]
+  ];
+  const bass2=[
+    [130.8,0,0.4,0.38],[130.8,2,0.4,0.32],[130.8,4,0.4,0.36],[174.6,4,0.4,0.30],
+    [130.8,8,0.4,0.36],[130.8,10,0.4,0.30],[146.8,12,0.4,0.32],
+    [174.6,16,0.4,0.32],[130.8,20,0.4,0.30],[130.8,24,0.4,0.35],[130.8,28,0.5,0.32]
+  ];
+  const totalB2=33;
+  mel2.forEach(([f,t,d,v])=>{ quizOscs.push(note(ac,master,rev,f,now+t*B,d*B,v*0.62,'sine')); });
+  harm2.forEach(([f,t,d,v])=>{ quizOscs.push(note(ac,master,rg,f,now+t*B,d*B,v*0.48,'triangle')); });
+  bass2.forEach(([f,t,d,v])=>{ quizOscs.push(note(ac,master,null,f,now+t*B,d*B,v*0.42,'sine')); });
+  quizTimer=setTimeout(()=>{ quizOn=false; quizOscs=[]; if(!G.muted) playQuizBGM(); }, totalB2*B*1000+400);
+}
+
+function stopQuizBGM(){ quizOn=false; clearTimeout(quizTimer); stopOscs(quizOscs); }
+
+function beep(f,d,type,v){
+  if(G.muted) return;
+  const ac=getAC(); if(!ac) return;
+  const o=ac.createOscillator(),g=ac.createGain();
+  o.type=type; o.frequency.value=f; g.gain.value=v;
+  o.connect(g); g.connect(ac.destination); o.start();
+  g.gain.exponentialRampToValueAtTime(0.0001,ac.currentTime+d); o.stop(ac.currentTime+d);
+}
+function playOK(){ beep(523,0.08,'triangle',0.04); setTimeout(()=>beep(659,0.1,'triangle',0.04),70); setTimeout(()=>beep(784,0.14,'triangle',0.04),140); }
+
+// 팡파레 효과음 — 웅장한 상승 멜로디
+function playFanfare(){
+  if(G.muted) return;
+  const ac=getAC(); if(!ac) return;
+  const master=ac.createGain(); master.gain.value=0.28; master.connect(ac.destination);
+  // 멜로디: C4→E4→G4→C5 (도미솔도 화음 상승)
+  const seq=[
+    [523.3, 0.00, 0.15, 'triangle'],  // C4
+    [659.3, 0.12, 0.15, 'triangle'],  // E4
+    [784.0, 0.24, 0.15, 'triangle'],  // G4
+    [1046.5,0.36, 0.35, 'triangle'],  // C5 (길게)
+    // 화음으로 한번 더
+    [523.3, 0.36, 0.35, 'sine'],      // C4 화음
+    [784.0, 0.36, 0.35, 'sine'],      // G4 화음
+    // 마지막 장식음
+    [1318.5,0.72, 0.20, 'triangle'],  // E5
+    [1046.5,0.90, 0.40, 'triangle'],  // C5 마무리
+  ];
+  seq.forEach(([f,t,d,wave])=>{
+    const o=ac.createOscillator(), g=ac.createGain();
+    o.type=wave; o.frequency.value=f;
+    const t0=ac.currentTime+t;
+    g.gain.setValueAtTime(0.0001,t0);
+    g.gain.linearRampToValueAtTime(0.8,t0+0.03);
+    g.gain.setValueAtTime(0.8,t0+d-0.05);
+    g.gain.exponentialRampToValueAtTime(0.0001,t0+d);
+    o.connect(g); g.connect(master);
+    o.start(t0); o.stop(t0+d+0.05);
+  });
+}
+
+// 팡파레 화면 표시 (2.5초 후 자동으로 퀘스트 완료 팝업)
+function showFanfare(questTitle, completedCount, onDone){
+  const fs=document.getElementById('fanfareScreen');
+  // 콘페티 파티클 생성
+  fs.innerHTML='';
+  const colors=['#ff4444','#ff9900','#ffdd00','#44bb44','#4488ff','#cc44ff','#ff44aa'];
+  for(let i=0;i<30;i++){
+    const c=document.createElement('div');
+    c.className='fanfare-confetti';
+    c.style.cssText=`left:${Math.random()*100}%;top:-10px;background:${colors[i%colors.length]};
+      width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;
+      animation-delay:${Math.random()*0.8}s;animation-duration:${2+Math.random()}s;`;
+    fs.appendChild(c);
+  }
+  // 카드 삽입
+  const card=document.createElement('div');
+  card.className='fanfare-card';
+  card.innerHTML=`
+    <div class="fanfare-emoji">🏆</div>
+    <div class="fanfare-title">퀘스트 완료!</div>
+    <div class="fanfare-sub">${questTitle.replace(/^Q\d\.\s/,'')}<br>역사 기록 조각 복원! ✦</div>
+    <div class="fanfare-stars">${'⭐'.repeat(completedCount)}${'☆'.repeat(4-completedCount)}</div>
+    <div style="margin-top:14px;font-size:14px;font-family:'Jua',sans-serif;color:#8a6a00;">${completedCount} / 4 완료</div>
+  `;
+  fs.appendChild(card);
+  fs.classList.add('show');
+  playFanfare();
+  // 2.5초 후 자동으로 닫고 onDone 실행
+  setTimeout(()=>{
+    fs.classList.remove('show');
+    fs.innerHTML='';
+    onDone();
+  }, 2800);
+}
+function playNG(){ beep(220,0.08,'sawtooth',0.03); setTimeout(()=>beep(185,0.12,'sawtooth',0.03),60); }
+
+function toggleMute(){
+  G.muted=!G.muted;
+  $('muteBtn').textContent=G.muted?'🔇':'🔊';
+  if(G.muted){ stopBGM(); stopQuizBGM(); }
+  else {
+    if(G.screen==='start') playBGM();
+    if(document.getElementById('overlay').classList.contains('show')) playQuizBGM();
+  }
+}
+
+// ═══════════════════════════════════════════
+// 시작화면 픽셀아트 배경 캔버스
+// ═══════════════════════════════════════════
+let titleRAF=null;
+const titleCv=document.getElementById('titleBgCanvas');
+const titleCx=titleCv.getContext('2d');
+let tW=0,tH=0;
+let cloudOffset=0;
+
+function resizeTitleCv(){
+  const r=window.devicePixelRatio||1;
+  tW=titleCv.clientWidth=titleCv.parentElement.clientWidth;
+  tH=titleCv.clientHeight=titleCv.parentElement.clientHeight;
+  titleCv.width=Math.floor(tW*r);
+  titleCv.height=Math.floor(tH*r);
+  titleCx.setTransform(r,0,0,r,0,0);
+}
+
+// 픽셀 rect 헬퍼
+function TP(x,y,w,h,col){
+  titleCx.fillStyle=col;
+  titleCx.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h));
+}
+
+// 픽셀 구름 그리기
+function drawPixelCloud(x,y,scale){
+  const s=scale||1;
+  const B=2*s;
+  // 가로로 넓적한 구름 모양 [col, row, w, h]
+  const shapes=[
+    [6,0,12,2],[2,2,24,2],[0,4,32,2],[0,6,32,2],[2,8,28,2],[4,10,20,2],[8,12,12,2],
+    [16,0,8,2],[26,2,6,2],
+  ];
+  shapes.forEach(([c,r,w,h])=>{
+    const shade=r<4?'#ffffff':r<8?'#f4f8ff':'#e8f0ff';
+    TP(x+c*B, y+r*B, w*B, h*B, shade);
+  });
+  // 상단 하이라이트
+  TP(x+8*B,  y,     12*B, B, '#ffffff');
+  TP(x+4*B,  y+2*B,  8*B, B, '#ffffff');
+  // 하단 그림자
+  TP(x+4*B, y+10*B, 24*B, B, '#d8e4f4');
+}
+
+// 픽셀 나무 그리기 (시작화면용) — 2px 단위
+function drawTitleTree(x,y,s){
+  s=s||1;
+  const B=Math.round;
+  const u=2*s; // 2px 최소 단위
+  // 그림자
+  TP(B(x-8*u),B(y+10*u),B(16*u),B(2*u),'rgba(0,0,0,0.13)');
+  // 기둥
+  for(let r=0;r<8;r++){
+    const shade=r%2===0?'#8a6030':'#a07848';
+    TP(B(x-u),B(y+r*u*0.8+4*u),B(2*u),B(u),'#8a6030');
+    TP(B(x-u),B(y+r*u*0.8+4*u),B(u*0.6),B(u),'#aa8050');
+  }
+  TP(B(x-u),B(y+4*u),B(2*u),B(8*u),'#8a6030');
+  TP(B(x-u),B(y+4*u),B(u),B(8*u),'#aa8050');
+  // 잎 레이어 — 촘촘하게
+  const leafLayers=[
+    {ow:14,oh:4,col:'#58c840',hi:'#70e050',sh:'#2a8818'},
+    {ow:12,oh:4,col:'#60d045',hi:'#78ea58',sh:'#308820'},
+    {ow:9, oh:3,col:'#6ad84e',hi:'#84f060',sh:'#38921e'},
+    {ow:7, oh:3,col:'#72e055',hi:'#8ef868',sh:'#3a9820'},
+    {ow:4, oh:3,col:'#7ae860',hi:'#96ff72',sh:'#3ea020'},
+  ];
+  leafLayers.forEach(({ow,oh,col,hi,sh},i)=>{
+    const lx=B(x-ow*u/2), ly=B(y-(i*3)*u), lw=B(ow*u), lh=B(oh*u);
+    // 픽셀단위로 잎 그리기
+    for(let pr=0;pr<lh;pr+=u){
+      for(let pc=0;pc<lw;pc+=u){
+        const edge=(pc<u||pc>=lw-u||pr<u||pr>=lh-u);
+        const c=edge?sh:(pr<u*1.5?hi:col);
+        TP(lx+pc, ly+pr, u, u, c);
+      }
+    }
+  });
+}
+
+// 픽셀 산 그리기 — 2px 슬라이스
+function drawPixelMountain(x,y,w,h,col,colDark,colSnow){
+  colSnow=colSnow||'#f8fcff';
+  const slice=2;
+  const rows=Math.round(h/slice);
+  for(let r=0;r<rows;r++){
+    const ratio=r/rows;
+    const rw=Math.round(w*ratio);
+    const rx=x-rw/2;
+    const ry=y+r*slice;
+    const c=ratio<0.18?colSnow:ratio<0.38?'#ddeeff':ratio<0.62?col:colDark;
+    TP(rx, ry, rw, slice, c);
+    // 왼쪽 하이라이트
+    if(rw>4) TP(rx, ry, 2, slice, ratio<0.4?'#ffffff':'rgba(255,255,255,0.3)');
+  }
+  // 눈 덮인 꼭대기
+  TP(x-Math.round(w*0.07), y, Math.round(w*0.14), Math.round(h*0.22), '#eef6ff');
+  TP(x-Math.round(w*0.04), y, Math.round(w*0.08), Math.round(h*0.14), '#ffffff');
+}
+
+// 픽셀 꽃 그리기 — 2px 단위
+function drawPixelFlower(x,y,col){
+  // 줄기
+  TP(x+1, y-10, 2, 11, '#48c030');
+  TP(x+1, y-10, 1, 11, '#60d840');
+  // 잎
+  TP(x-3, y-5,  4, 2, '#48c030');
+  TP(x+3, y-7,  4, 2, '#48c030');
+  // 꽃잎 (2px 단위)
+  TP(x,   y-14, 4, 4, col);
+  TP(x-4, y-10, 4, 4, col);
+  TP(x+4, y-10, 4, 4, col);
+  TP(x,   y-6,  4, 4, col);
+  TP(x-3, y-13, 4, 4, col);
+  TP(x+3, y-13, 4, 4, col);
+  // 꽃술 (밝은 노랑)
+  TP(x,   y-11, 4, 4, '#fff060');
+  TP(x+1, y-10, 2, 2, '#ffffff');
+}
+
+// 픽셀 울타리 — 2px 단위
+function drawPixelFence(x,y,w){
+  const postW=4, postH=18, gap=18;
+  const posts=Math.floor(w/(postW+gap))+1;
+  for(let i=0;i<=posts;i++){
+    const px=x+i*(postW+gap);
+    // 기둥
+    TP(px,   y,    postW, postH, '#e8c070');
+    TP(px,   y,    2,     postH, '#fff0a0');
+    TP(px+2, y,    2,     postH, '#c8a040');
+    // 뾰족 위
+    TP(px+1, y-4,  2, 5, '#e8c070');
+    TP(px+1, y-6,  2, 3, '#e8c070');
+    TP(px+2, y-8,  0, 0, '#e8c070');
+  }
+  // 가로대 (2줄)
+  for(let gy=0;gy<w;gy+=2){
+    const shade=gy%4===0?'#e0b860':'#c89a40';
+    TP(x+gy, y+4,  2, 3, shade);
+    TP(x+gy, y+11, 2, 3, shade);
+  }
+  TP(x, y+4,  w, 1, '#f0d080');
+  TP(x, y+11, w, 1, '#f0d080');
+}
+
+function drawTitleBg(){
+  if(!tW) return;
+  const grassY=Math.round(tH*0.72);
+
+  // ── 하늘 그라데이션 — 밝고 선명하게, 2px 슬라이스 ──
+  const skyColors=[
+    '#6ac4f0','#72caf4','#7ed0f6','#8ad6f8',
+    '#96dcfa','#a4e2fc','#b4eafe','#c8f0ff',
+  ];
+  const sliceH=Math.ceil(grassY/skyColors.length);
+  skyColors.forEach((col,i)=>{
+    // 2px 단위 픽셀 슬라이스
+    for(let py2=0;py2<sliceH;py2+=2){
+      TP(0, i*sliceH+py2, tW, 2, col);
+    }
+  });
+
+  // ── 태양 — 밝고 크게 ──
+  const sunX=Math.round(tW*0.80), sunY=Math.round(tH*0.13);
+  // 햇살 8방향, 2px 점선
+  const rayDirs=[[0,-1],[1,-1],[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1]];
+  rayDirs.forEach(([dx,dy])=>{
+    for(let r=16;r<=32;r+=4){
+      TP(sunX+dx*r-1, sunY+dy*r-1, 3, 3, 'rgba(255,240,100,0.75)');
+      TP(sunX+dx*r,   sunY+dy*r,   2, 2, 'rgba(255,255,180,0.5)');
+    }
+  });
+  // 4방향 긴 햇살
+  [[0,-1],[1,0],[0,1],[-1,0]].forEach(([dx,dy])=>{
+    for(let r=20;r<=40;r+=4){
+      TP(sunX+dx*r-1, sunY+dy*r-1, 3, 3, 'rgba(255,240,80,0.5)');
+    }
+  });
+  // 태양 본체 (동심원 2px)
+  const sunLayers=[
+    {r:18,col:'#fff7b0'},{r:15,col:'#fff090'},{r:12,col:'#ffe840'},
+    {r:9,col:'#ffd820'},{r:6,col:'#ffee80'},{r:3,col:'#ffffff'},
+  ];
+  sunLayers.forEach(({r,col})=>{
+    for(let angle=0;angle<Math.PI*2;angle+=0.08){
+      const sx=Math.round(sunX+Math.cos(angle)*r);
+      const sy=Math.round(sunY+Math.sin(angle)*r);
+      TP(sx-1,sy-1,3,3,col);
+    }
+    TP(sunX-r,sunY-r,r*2,r*2,col);
+  });
+
+  // ── 픽셀 구름 ──
+  const clouds=[
+    {bx:0.06, y:0.08, s:1.6},
+    {bx:0.30, y:0.05, s:1.2},
+    {bx:0.56, y:0.10, s:1.8},
+    {bx:0.78, y:0.06, s:1.3},
+    {bx:0.20, y:0.19, s:1.0},
+    {bx:0.50, y:0.20, s:1.1},
+    {bx:0.90, y:0.18, s:0.9},
+  ];
+  clouds.forEach((c,i)=>{
+    const spd=0.012+i*0.004;
+    const cx2=((c.bx*tW + cloudOffset*spd)%(tW+180))-90;
+    drawPixelCloud(cx2, c.y*tH, c.s);
+  });
+
+  // ── 배경 산 (밝은 청보라) ──
+  drawPixelMountain(tW*0.15, grassY-Math.round(tH*0.26), Math.round(tW*0.26), Math.round(tH*0.26), '#a0c0e8','#7898c0','#f0f8ff');
+  drawPixelMountain(tW*0.48, grassY-Math.round(tH*0.34), Math.round(tW*0.30), Math.round(tH*0.34), '#b0cef0','#88a8d0','#f4faff');
+  drawPixelMountain(tW*0.78, grassY-Math.round(tH*0.22), Math.round(tW*0.22), Math.round(tH*0.22), '#a0c0e8','#7898c0','#f0f8ff');
+
+  // ── 잔디 — 밝고 촘촘하게 ──
+  // 잔디 기본 (2px 줄무늬 패턴)
+  const grassPalette=['#5cd83a','#64e040','#50cc30','#70e848','#48c028','#6ce044'];
+  for(let gy2=grassY;gy2<tH;gy2+=2){
+    const depthRatio=(gy2-grassY)/(tH-grassY);
+    const colIdx=Math.min(Math.floor(depthRatio*3)+Math.floor((gy2/2)%2), grassPalette.length-1);
+    const base=depthRatio<0.15?grassPalette[1]:depthRatio<0.35?grassPalette[0]:depthRatio<0.6?grassPalette[2]:grassPalette[4];
+    TP(0, gy2, tW, 2, base);
+  }
+  // 가로 줄무늬 (밝은 띠)
+  for(let sy2=0;sy2<tW;sy2+=8){
+    TP(sy2, grassY,              4, Math.round(tH*0.10), 'rgba(120,255,80,0.10)');
+    TP(sy2+4, grassY+Math.round(tH*0.05), 4, Math.round(tH*0.08), 'rgba(60,200,30,0.08)');
+  }
+  // 풀잎 최상단 (삐죽삐죽)
+  for(let bx2=0;bx2<tW;bx2+=4){
+    const h2=4+((bx2*13)%5);
+    const gc=['#78f048','#60e030','#8aff58','#50d820','#70e840'];
+    TP(bx2, grassY-h2, 2, h2+2, gc[(bx2/4)%gc.length]);
+  }
+
+  // ── 울타리 ──
+  drawPixelFence(0, grassY+4, tW);
+
+  // ── 나무 (2px 단위, 촘촘) ──
+  const bgTrees=[
+    {rx:0.02,s:0.5},{rx:0.10,s:0.7},{rx:0.20,s:0.55},{rx:0.30,s:0.65},
+    {rx:0.40,s:0.5},{rx:0.52,s:0.7},{rx:0.62,s:0.55},{rx:0.72,s:0.65},
+    {rx:0.82,s:0.5},{rx:0.91,s:0.6},{rx:0.97,s:0.45},
+  ];
+  bgTrees.forEach(({rx,s})=>{
+    drawTitleTree(Math.round(rx*tW), grassY, s);
+  });
+
+  // ── 꽃 (더 많이, 더 작게) ──
+  const flowers=[
+    {rx:0.06,col:'#ff7090'},{rx:0.13,col:'#ffaaee'},{rx:0.22,col:'#ffffff'},
+    {rx:0.34,col:'#ffdd50'},{rx:0.44,col:'#ff8ab0'},{rx:0.58,col:'#c0eeff'},
+    {rx:0.66,col:'#ffaaee'},{rx:0.74,col:'#ff7090'},{rx:0.84,col:'#ffdd50'},
+    {rx:0.93,col:'#ffffff'},{rx:0.98,col:'#ff8ab0'},
+  ];
+  flowers.forEach(({rx,col})=>{
+    drawPixelFlower(Math.round(rx*tW), grassY+6, col);
+  });
+
+  // ── 새 (2px 단위) ──
+  const t=Date.now()/1000;
+  const flap=Math.sin(t*8)>0;
+  [[0.22,0.16,0.38,0.72],[0.64,0.13,0.28,0.55]].forEach(([bx3,by3,sx3,spd3],bi)=>{
+    const bx4=Math.round((Math.sin(t*spd3)*0.15+bx3)*tW);
+    const by4=Math.round((Math.sin(t*(spd3+0.3))*0.03+by3)*tH);
+    TP(bx4,   by4,   6, 2, '#2a3a5a');
+    TP(bx4+2, by4-1, 2, 2, '#2a3a5a');
+    if(flap){
+      TP(bx4-6, by4-2, 6, 2, '#2a3a5a');
+      TP(bx4+6, by4-2, 6, 2, '#2a3a5a');
+    } else {
+      TP(bx4-6, by4+1, 6, 2, '#2a3a5a');
+      TP(bx4+6, by4+1, 6, 2, '#2a3a5a');
+    }
+  });
+}
+
+function startTitleBg(){
+  resizeTitleCv();
+  let lastT=0;
+  function tick(now){
+    titleRAF=requestAnimationFrame(tick);
+    if(now-lastT<50) return; // ~20fps로 충분
+    lastT=now;
+    cloudOffset+=0.8;
+    drawTitleBg();
+  }
+  titleRAF=requestAnimationFrame(tick);
+}
+window.addEventListener('resize',()=>{ if(G.screen==='start'){ resizeTitleCv(); } });
+
+function stopTitleBg(){ if(titleRAF){ cancelAnimationFrame(titleRAF); titleRAF=null; } }
+
+// ═══════════════════════════════════════════
+// 게임 캔버스
+// ═══════════════════════════════════════════
+const cv=$('gameCanvas');
+const cx=cv.getContext('2d');
+let CW=0,CH=0;
+const TILE=8;
+let mapCols=0, mapRows=0, mapData=[];
+
+function resizeCv(){
+  const r=window.devicePixelRatio||1;
+  CW=cv.clientWidth=cv.parentElement.clientWidth;
+  CH=cv.clientHeight=cv.parentElement.clientHeight;
+  cv.width=Math.floor(CW*r); cv.height=Math.floor(CH*r);
+  cx.setTransform(r,0,0,r,0,0);
+  mapCols=0; // 맵 재생성
+}
+
+function buildMap(){
+  mapCols=Math.ceil(CW/TILE)+2; mapRows=Math.ceil(CH/TILE)+2;
+  mapData=[];
+  for(let r=0;r<mapRows;r++){ mapData[r]=[]; for(let c=0;c<mapCols;c++) mapData[r][c]=0; }
+
+  // ── S자 구불구불한 강 ──
+  // 강 너비 (타일 단위)
+  const riverW=4;
+  // 열(c)마다 강의 중심 행(r)을 sin으로 구불구불하게
+  for(let c=0;c<mapCols;c++){
+    // S자: 진폭 크게, 주기 길게
+    const progress=c/mapCols; // 0~1
+    const centerR=Math.round(
+      mapRows*0.32                                  // 전체 수직 중심
+      + Math.sin(progress*Math.PI*2)*mapRows*0.05   // 완만한 S 곡선
+      + Math.sin(progress*Math.PI*3.5)*mapRows*0.02 // 작은 잔물결
+    );
+    for(let dr=-riverW;dr<=riverW;dr++){
+      const rr=centerR+dr;
+      if(mapData[rr]) mapData[rr][c]=2;
+    }
+    // 강변 (돌/모래 경계)
+    const edge1=centerR-riverW-1, edge2=centerR+riverW+1;
+    if(mapData[edge1]) mapData[edge1][c]=3;
+    if(mapData[edge2]) mapData[edge2][c]=3;
+  }
+
+  // ── 길 (오솔길) ──
+  const pts=[[0,Math.floor(mapRows*0.90)],[Math.floor(mapCols*0.22),Math.floor(mapRows*0.76)],
+             [Math.floor(mapCols*0.5),Math.floor(mapRows*0.68)],[Math.floor(mapCols*0.75),Math.floor(mapRows*0.60)],[mapCols-1,Math.floor(mapRows*0.48)]];
+  for(let i=0;i<pts.length-1;i++){
+    let [c0,r0]=pts[i],[c1,r1s]=pts[i+1];
+    const steps=Math.max(Math.abs(c1-c0),Math.abs(r1s-r0));
+    for(let s=0;s<=steps;s++){
+      const c=Math.round(c0+(c1-c0)*s/steps), r=Math.round(r0+(r1s-r0)*s/steps);
+      for(let dr=-1;dr<=1;dr++) for(let dc=-1;dc<=1;dc++) if(mapData[r+dr]&&mapData[r+dr][c+dc]!==2) mapData[r+dr][c+dc]=1;
+    }
+  }
+}
+
+function P(x,y,w,h,col){ cx.fillStyle=col; cx.fillRect(Math.round(x),Math.round(y),Math.round(w),Math.round(h)); }
+
+function drawTile(c,r){
+  const x=c*TILE, y=r*TILE, t=mapData[r]?mapData[r][c]:0;
+  if(t===0){
+    const s=(c*7+r*13)%9;
+    P(x,y,TILE,TILE,s<3?'#4a9030':'#529838');
+    P(x,y,TILE,1,'#5aaa38'); P(x,y,1,TILE,'#5aaa38');
+    if(s===0){ P(x+2,y+2,1,2,'#68c040'); P(x+5,y+5,1,2,'#68c040'); }
+  } else if(t===1){
+    P(x,y,TILE,TILE,'#c8965a'); P(x,y,TILE,1,'#d9a96a'); P(x,y,1,TILE,'#d9a96a');
+  } else if(t===2){
+    const now=Date.now();
+    const waveT=now/600;
+    // 강물 기본색 (깊이감 — 위쪽 밝고 아래 어둡게)
+    const baseCol=r%2===0?'#3a90d8':'#3488cc';
+    P(x,y,TILE,TILE,baseCol);
+    // 물결 — sin 값으로 타일마다 위상 다르게
+    const phase=Math.sin(waveT + c*0.8 + r*0.4);
+    const phase2=Math.sin(waveT*1.3 + c*1.2 - r*0.6);
+    // 물결 밝은 선 (가로)
+    const wy1=Math.round((phase *0.5+0.5)*5)+1;
+    const wy2=Math.round((phase2*0.5+0.5)*3)+4;
+    P(x,   y+wy1, TILE,   1, 'rgba(255,255,255,0.32)');
+    P(x+2, y+wy1, TILE-4, 1, 'rgba(255,255,255,0.18)');
+    P(x+1, y+wy2, TILE-2, 1, 'rgba(255,255,255,0.20)');
+    // 물결 어두운 골
+    const dy1=Math.round((Math.sin(waveT*0.9+c*0.9+r*0.7)*0.5+0.5)*4)+1;
+    P(x, y+dy1, TILE, 1, 'rgba(0,60,120,0.18)');
+    // 거품/반짝임
+    if((c+r+Math.floor(waveT))%5===0){
+      P(x+2, y+2, 2, 1, 'rgba(255,255,255,0.55)');
+    }
+    if((c*3+r*2+Math.floor(waveT*1.5))%7===0){
+      P(x+5, y+5, 2, 1, 'rgba(255,255,255,0.40)');
+    }
+  } else {
+    P(x,y,TILE,TILE,'#8a8070'); P(x,y,TILE,1,'#9a9080');
+    P(x+2,y+2,3,2,'#7a7060');
+  }
+}
+
+function drawTree(x,y,s){
+  s=s||0.6;
+  const b=Math.round;
+  P(b(x-6*s),b(y+18*s),b(12*s),b(4*s),'rgba(0,0,0,0.18)');
+  P(b(x-2*s),b(y+6*s),b(4*s),b(14*s),'#6a4820');
+  P(b(x-9*s),b(y+4*s),b(18*s),b(6*s),'#246018'); P(b(x-7*s),b(y+2*s),b(14*s),b(4*s),'#246018');
+  P(b(x-6*s),b(y-4*s),b(12*s),b(8*s),'#2e7820'); P(b(x-4*s),b(y-6*s),b(8*s),b(4*s),'#2e7820');
+  P(b(x-4*s),b(y-12*s),b(8*s),b(8*s),'#3a9028'); P(b(x-2*s),b(y-14*s),b(4*s),b(4*s),'#3a9028');
+  P(b(x-4*s),b(y-2*s),b(3*s),b(3*s),'#48b030');
+}
+
+function drawBuilding(q,idx){
+  const x=q.x*CW, y=q.y*CH, col=q.color;
+  const S=CW<=600 ? 1.1 : 1.8;
+  const pulse=1+Math.sin(Date.now()/320+idx)*0.07;
+  const done=q.done;
+  const rc=done?'#d4a000':col;
+  const wc=done?'#fff3b0':'#f0e0c0';
+
+  // ── 건물 배경 패널 (배경 잔디와 구분용) ──
+  const pad=S*28;
+  cx.globalAlpha=0.38;
+  cx.fillStyle='rgba(10,30,10,1)';
+  cx.beginPath();
+  cx.ellipse(x+S*3,y+S*4,pad*1.5,pad*0.9,0,0,Math.PI*2);
+  cx.fill();
+  cx.globalAlpha=1;
+
+  // 후광
+  if(!done){
+    cx.globalAlpha=0.12+Math.abs(Math.sin(Date.now()/400+idx))*0.10;
+    cx.beginPath(); cx.arc(x,y,54*pulse*S*0.6,0,Math.PI*2); cx.fillStyle=col; cx.fill();
+    cx.globalAlpha=1;
+  }
+
+  if(idx===0){
+    // ── Q1: 작고 아담한 초가집 ──
+    const s=S*1.0;
+    P(x-22*s,y+36*s,44*s,6*s,'rgba(0,0,0,0.15)'); // 그림자
+    // 벽
+    P(x-16*s,y+8*s,32*s,26*s,wc);
+    P(x-16*s,y+8*s,3*s,26*s,'rgba(255,255,255,0.3)');
+    cx.strokeStyle='#8a6a3a'; cx.lineWidth=1.5*s; cx.strokeRect(x-16*s,y+8*s,32*s,26*s);
+    // 초가 지붕 (둥글넓적)
+    cx.fillStyle=rc; cx.beginPath();
+    cx.moveTo(x,y-10*s); cx.lineTo(x-22*s,y+10*s); cx.lineTo(x+22*s,y+10*s);
+    cx.closePath(); cx.fill();
+    cx.strokeStyle=done?'#806000':col; cx.lineWidth=1.5*s; cx.stroke();
+    // 지붕 짚 결 (가로줄)
+    cx.globalAlpha=0.25;
+    for(let i=0;i<3;i++) P(x-18*s+i*2*s, y+2*s+i*3*s, 36*s-i*4*s, 1.5*s, '#fff');
+    cx.globalAlpha=1;
+    // 굴뚝 없음 — 연기구멍
+    P(x+5*s,y-8*s,4*s,4*s,'#5a3a1a');
+    // 문 (아치형 느낌)
+    P(x-5*s,y+20*s,10*s,14*s,done?'#c8960a':'#8a5a2e');
+    P(x-5*s,y+20*s,3*s,14*s,'rgba(255,255,255,0.2)');
+    P(x-1*s,y+27*s,2*s,2*s,'#ffd700');
+    // 창문 (작은 원형)
+    P(x-13*s,y+12*s,6*s,6*s,'#aaddff');
+    P(x+7*s, y+12*s,6*s,6*s,'#aaddff');
+    P(x-13*s,y+12*s,6*s,1*s,'#88bbdd'); P(x-10*s,y+12*s,1*s,6*s,'#88bbdd');
+    P(x+7*s, y+12*s,6*s,1*s,'#88bbdd'); P(x+10*s,y+12*s,1*s,6*s,'#88bbdd');
+
+  } else if(idx===1){
+    // ── Q2: 웅장한 궁궐 스타일 (넓고 높음) ──
+    const s=S*0.95;
+    P(x-32*s,y+40*s,64*s,7*s,'rgba(0,0,0,0.18)');
+    // 기단 (석조)
+    P(x-26*s,y+26*s,52*s,10*s,'#b0a090');
+    P(x-26*s,y+26*s,52*s,2*s,'#c8b8a0');
+    // 본체 벽 (넓적)
+    P(x-24*s,y+4*s,48*s,24*s,wc);
+    P(x-24*s,y+4*s,4*s,24*s,'rgba(255,255,255,0.3)');
+    cx.strokeStyle='#8a6a3a'; cx.lineWidth=2*s; cx.strokeRect(x-24*s,y+4*s,48*s,24*s);
+    // 처마 (기와지붕 — 양 끝이 위로 살짝 들림)
+    cx.fillStyle=rc;
+    cx.beginPath();
+    cx.moveTo(x,y-22*s);
+    cx.lineTo(x-30*s,y+6*s);
+    cx.quadraticCurveTo(x-34*s,y+8*s,x-32*s,y+4*s);
+    cx.lineTo(x+32*s,y+4*s);
+    cx.quadraticCurveTo(x+34*s,y+8*s,x+30*s,y+6*s);
+    cx.lineTo(x,y-22*s);
+    cx.closePath(); cx.fill();
+    cx.strokeStyle=done?'#806000':col; cx.lineWidth=2*s; cx.stroke();
+    // 처마 끝 장식
+    P(x-32*s,y+2*s,6*s,4*s,done?'#c8a000':col);
+    P(x+26*s, y+2*s,6*s,4*s,done?'#c8a000':col);
+    // 지붕 하이라이트
+    cx.globalAlpha=0.25; cx.fillStyle='#fff';
+    cx.beginPath(); cx.moveTo(x,y-22*s); cx.lineTo(x-14*s,y+4*s); cx.lineTo(x,y+4*s); cx.closePath(); cx.fill();
+    cx.globalAlpha=1;
+    // 굴뚝 2개
+    P(x-18*s,y-20*s,5*s,10*s,'#7a5a3a'); P(x-18*s,y-22*s,7*s,4*s,'#5a3a1a');
+    P(x+13*s, y-18*s,5*s,8*s, '#7a5a3a'); P(x+13*s, y-20*s,7*s,4*s,'#5a3a1a');
+    // 문 (이중문 느낌)
+    P(x-10*s,y+14*s,20*s,18*s,done?'#c8960a':'#6a3a1e');
+    P(x,     y+14*s,2*s, 18*s,'#5a3010');
+    P(x-10*s,y+14*s,4*s, 18*s,'rgba(255,255,255,0.15)');
+    P(x-2*s, y+22*s,2*s,2*s,'#ffd700'); P(x+2*s,y+22*s,2*s,2*s,'#ffd700');
+    // 창문 3개
+    for(let i=-1;i<=1;i++){
+      P(x+i*16*s-4*s,y+8*s,8*s,8*s,'#aaddff');
+      P(x+i*16*s-4*s,y+8*s,8*s,1*s,'#88bbdd');
+      P(x+i*16*s,    y+8*s,1*s,8*s,'#88bbdd');
+    }
+
+  } else if(idx===2){
+    // ── Q3: 망루/탑 스타일 (좁고 높음) ──
+    const s=S*0.95;
+    P(x-18*s,y+50*s,36*s,6*s,'rgba(0,0,0,0.18)');
+    // 탑 하단
+    P(x-14*s,y+14*s,28*s,32*s,wc);
+    P(x-14*s,y+14*s,3*s,32*s,'rgba(255,255,255,0.3)');
+    cx.strokeStyle='#8a6a3a'; cx.lineWidth=2*s; cx.strokeRect(x-14*s,y+14*s,28*s,32*s);
+    // 탑 상단 (더 좁게)
+    P(x-10*s,y-4*s,20*s,20*s,wc);
+    P(x-10*s,y-4*s,3*s,20*s,'rgba(255,255,255,0.25)');
+    cx.strokeStyle='#8a6a3a'; cx.lineWidth=1.5*s; cx.strokeRect(x-10*s,y-4*s,20*s,20*s);
+    // 탑 꼭대기 뾰족 지붕
+    cx.fillStyle=rc; cx.beginPath();
+    cx.moveTo(x,y-28*s); cx.lineTo(x-12*s,y-2*s); cx.lineTo(x+12*s,y-2*s);
+    cx.closePath(); cx.fill();
+    cx.strokeStyle=done?'#806000':col; cx.lineWidth=1.5*s; cx.stroke();
+    // 깃발
+    P(x,y-28*s,2*s,10*s,'#8a6030');
+    cx.fillStyle=col; cx.beginPath();
+    cx.moveTo(x+2*s,y-28*s); cx.lineTo(x+10*s,y-24*s); cx.lineTo(x+2*s,y-20*s);
+    cx.closePath(); cx.fill();
+    // 탑 중간 돌출 (발코니)
+    P(x-16*s,y+12*s,32*s,4*s,'#b0a090');
+    P(x-16*s,y+12*s,32*s,1.5*s,'#c8b8a0');
+    // 화살구멍 창문들
+    P(x-7*s, y+0*s, 4*s,8*s,'#aaddff');
+    P(x+3*s, y+0*s, 4*s,8*s,'#aaddff');
+    P(x-6*s, y+20*s,4*s,8*s,'#aaddff');
+    P(x+2*s, y+20*s,4*s,8*s,'#aaddff');
+    P(x-5*s, y+36*s,5*s,7*s,'#aaddff');
+    P(x+1*s, y+36*s,5*s,7*s,'#aaddff');
+    // 문 (아치)
+    P(x-5*s,y+32*s,10*s,14*s,done?'#c8960a':'#8a5a2e');
+    P(x-5*s,y+32*s,3*s,14*s,'rgba(255,255,255,0.2)');
+    P(x-1*s,y+40*s,2*s,2*s,'#ffd700');
+
+  } else {
+    // ── Q4: 넓고 낮은 창고/서고 스타일 ──
+    const s=S*1.0;
+    P(x-30*s,y+38*s,60*s,7*s,'rgba(0,0,0,0.18)');
+    // 넓적한 벽 (낮고 가로로 김)
+    P(x-26*s,y+6*s,52*s,30*s,wc);
+    P(x-26*s,y+6*s,4*s,30*s,'rgba(255,255,255,0.3)');
+    cx.strokeStyle='#8a6a3a'; cx.lineWidth=2*s; cx.strokeRect(x-26*s,y+6*s,52*s,30*s);
+    // 낮고 넓은 맞배지붕
+    cx.fillStyle=rc; cx.beginPath();
+    cx.moveTo(x-28*s,y-8*s); cx.lineTo(x+28*s,y-8*s);
+    cx.lineTo(x+30*s,y+8*s); cx.lineTo(x-30*s,y+8*s);
+    cx.closePath(); cx.fill();
+    cx.strokeStyle=done?'#806000':col; cx.lineWidth=2*s; cx.stroke();
+    // 지붕 마루대 (가운데 능선)
+    P(x-28*s,y-10*s,56*s,4*s,done?'#b08000':col);
+    P(x-28*s,y-10*s,56*s,1.5*s,'rgba(255,255,255,0.3)');
+    // 지붕 하이라이트
+    cx.globalAlpha=0.2; cx.fillStyle='#fff';
+    cx.fillRect(x-28*s,y-8*s,56*s,8*s);
+    cx.globalAlpha=1;
+    // 굴뚝
+    P(x+16*s,y-18*s,5*s,12*s,'#7a5a3a'); P(x+16*s,y-20*s,7*s,4*s,'#5a3a1a');
+    // 문 (큰 창고문 — 양쪽으로 열리는)
+    P(x-12*s,y+16*s,24*s,20*s,done?'#c8960a':'#8a5a2e');
+    P(x,     y+16*s,2*s, 20*s,'#6a3a10');  // 문 가운데 선
+    P(x-12*s,y+16*s,4*s, 20*s,'rgba(255,255,255,0.15)');
+    P(x-3*s, y+25*s,2*s,2*s,'#ffd700'); P(x+3*s,y+25*s,2*s,2*s,'#ffd700');
+    // 창문 4개 (가로로 나란히)
+    for(let i=0;i<2;i++){
+      P(x-24*s+i*2*s,y+10*s,8*s,8*s,'#aaddff');
+      P(x-24*s+i*2*s,y+10*s,8*s,1*s,'#88bbdd');
+      P(x-20*s+i*2*s,y+10*s,1*s,8*s,'#88bbdd');
+      P(x+14*s-i*2*s,y+10*s,8*s,8*s,'#aaddff');
+      P(x+14*s-i*2*s,y+10*s,8*s,1*s,'#88bbdd');
+      P(x+18*s-i*2*s,y+10*s,1*s,8*s,'#88bbdd');
+    }
+  }
+
+  // ── 공통: 번호/체크 ──
+  cx.fillStyle=done?'#ffd700':'#fff';
+  const numS=(idx===2)?S*0.95:idx===0?S*1.0:idx===1?S*0.95:S;
+  cx.font='bold '+(16*numS)+'px Jua,sans-serif';
+  cx.textAlign='center'; cx.textBaseline='middle';
+  const numY=idx===2?y-16*numS:idx===1?y-10*numS:y-8*(idx===0?S*1.0:S);
+  cx.fillText(done?'✓':String(idx+1),x,numY);
+
+  // ── 공통: 이름표 ──
+  const lbl=q.title.replace(/^Q\d\.\s/,'');
+  cx.font='bold 19px DotGothic16,Jua,sans-serif';
+  const lw=cx.measureText(lbl).width+22;
+  const labelS=idx===2?S*0.95:idx===1?S*0.95:idx===0?S*1.0:S;
+  const ly=y-72*labelS;
+  P(x-lw/2,ly,lw,28,'rgba(0,0,0,0.85)');
+  P(x-lw/2,ly,lw,3,done?'#ffd700':col);
+  cx.fillStyle='rgba(0,0,0,0.85)';
+  cx.beginPath(); cx.moveTo(x-6,ly+28); cx.lineTo(x+6,ly+28); cx.lineTo(x,ly+36); cx.closePath(); cx.fill();
+  cx.fillStyle=done?'#ffd700':'#fff';
+  cx.textBaseline='middle';
+  cx.fillText(lbl,x,ly+14);
+}
+
+function drawPlayer(){
+  const SNAP=1;
+  const px=Math.round(G.player.x*CW/SNAP)*SNAP;
+  const py=Math.round(G.player.y*CH/SNAP)*SNAP;
+  const b=Math.round;
+
+  // ── 퀘스트 근접 탐구 모션 여부 ──
+  const nextQuest=G.quests.find(q=>!q.done);
+  const nearQuest=nextQuest&&dist(G.player.x,G.player.y,nextQuest.x,nextQuest.y)<0.10;
+  const inspecting=nearQuest&&!G.popupLocked;
+  const t=Date.now()/1000;
+  const inspectSwing=inspecting?Math.round(Math.sin(t*4)*3):0;
+  const inspectBob  =inspecting?Math.round(Math.sin(t*4)*2):0;
+  // 스핀: 0.8초에 한바퀴 (inspecting 시작 시각 기준)
+  if(inspecting && !G.inspectStartT) G.inspectStartT=t;
+  if(!inspecting) G.inspectStartT=null;
+  const spinAngle=inspecting?((t - G.inspectStartT)/0.8)*Math.PI*2:0;
+
+  // ── 이동 여부 & 방향 판단 ──
+  const mv=dist(G.player.x,G.player.y,G.player.tx,G.player.ty)>0.004;
+  const facingLeft=G.player.tx<G.player.x-0.005;
+
+  // ── 4프레임 걷기 사이클 (이동 중일 때만 프레임 진행) ──
+  if(mv) G.walkTimer=(G.walkTimer||0)+1;
+  const fr=mv?Math.floor(G.walkTimer/8)%4:0;
+  const frames=[
+    {ll:0, rl:0,  ls:0,  rs:0,  body:0},
+    {ll:-3,rl:3,  ls:3,  rs:-3, body:-1},
+    {ll:0, rl:0,  ls:0,  rs:0,  body:0},
+    {ll:3, rl:-3, ls:-3, rs:3,  body:1},
+  ];
+  const F=frames[fr];
+  const ll=facingLeft?F.rl:F.ll, rl=facingLeft?F.ll:F.rl;
+  const ls=facingLeft?F.rs:F.ls, rs=facingLeft?F.ls:F.rs;
+  const by=inspecting?inspectBob:F.body;
+
+  // ── 그림자 (rotate 밖 — 캐릭터와 함께 이동) ──
+  // 바깥 흐린 그림자
+  cx.globalAlpha=0.10;
+  cx.beginPath(); cx.ellipse(px+2, py+24, 18, 5, 0, 0, Math.PI*2);
+  cx.fillStyle='#000'; cx.fill();
+  // 안쪽 진한 그림자
+  cx.globalAlpha=0.22;
+  cx.beginPath(); cx.ellipse(px+1, py+23, 11, 3, 0, 0, Math.PI*2);
+  cx.fillStyle='#000'; cx.fill();
+  // 중심 가장 진한 부분
+  cx.globalAlpha=0.30;
+  cx.beginPath(); cx.ellipse(px, py+22, 6, 2, 0, 0, Math.PI*2);
+  cx.fillStyle='#111'; cx.fill();
+  cx.globalAlpha=1;
+
+  // ── 스핀 적용: 캐릭터 중심(px, py+4) 기준으로 회전 ──
+  cx.save();
+  if(inspecting) cx.rotate && (cx.translate(px, py+4), cx.rotate(spinAngle), cx.translate(-px, -(py+4)));
+
+  // ── 다리 (짧고 통통 — 청바지 느낌) ──
+  P(b(px-6),b(py+11+ll),5,8,'#4a6aaa');
+  P(b(px-6),b(py+11+ll),5,2,'#3a5090');
+  P(b(px+1),b(py+11+rl),5,8,'#4a6aaa');
+  P(b(px+1),b(py+11+rl),5,2,'#3a5090');
+  // 운동화 (밝고 통통)
+  P(b(px-8),b(py+18+ll),9,5,'#f0f0ee');
+  P(b(px-8),b(py+18+ll),9,2,'#d8d8d4');
+  P(b(px-8),b(py+20+ll),9,2,'#e05030');  // 밑창 빨강
+  P(b(px+0), b(py+18+rl),9,5,'#f0f0ee');
+  P(b(px+0), b(py+18+rl),9,2,'#d8d8d4');
+  P(b(px+0), b(py+20+rl),9,2,'#e05030');
+
+  // ── 몸통 (아이 체형 — 짧고 넓적) ──
+  // 후드티 스타일 (주황/노랑 — 밝고 활기찬 색)
+  P(b(px-9),b(py-4+by),18,15,'#f07820');
+  P(b(px-9),b(py-4+by),3,15,'rgba(255,255,255,0.28)');
+  P(b(px-9),b(py-4+by),18,2,'#e06010');
+  // 후드 주머니
+  P(b(px-5),b(py+4+by),10,5,'#d06010');
+  P(b(px-5),b(py+4+by),10,1,'#e07020');
+  // 옷깃 (흰 칼라)
+  P(b(px-4),b(py-4+by),8,3,'#fff');
+  P(b(px-2),b(py-4+by),4,5,'#eee');
+
+  // ── 왼팔: 종이뭉치 ──
+  P(b(px-14),b(py-2+ls+by),5,10,'#f07820');
+  P(b(px-14),b(py-2+ls+by),5,2,'#e06010');
+  // 손 (왼)
+  P(b(px-14),b(py+7+ls+by),5,4,'#ffe0b0');
+  // 종이뭉치
+  const px_=b(px-22), py_=b(py+4+ls+by);
+  P(px_,   py_,   11,9,'#fdf8e8');
+  P(px_,   py_,   11,1,'#d4c88a');
+  P(px_+1, py_+2, 9,1,'#c8b870');
+  P(px_+1, py_+4, 7,1,'#c8b870');
+  P(px_+1, py_+6, 8,1,'#c8b870');
+  P(px_,   py_,   1,9,'#d4c88a');
+  P(px_+10,py_,   1,9,'#d4c88a');
+  P(px_+8, py_,   3,3,'#f0ead4');  // 말린 모서리
+
+  // ── 오른팔: 돋보기 ──
+  // inspecting 시: 팔을 위로 올려 돋보기를 눈 앞에 갖다댐
+  const armRaise=inspecting?-14+inspectSwing:0; // 팔 올림 오프셋
+  P(b(px+9),b(py-2+rs+by+armRaise),5,10,'#f07820');
+  P(b(px+9),b(py-2+rs+by+armRaise),5,2,'#e06010');
+  // 손 (오른)
+  P(b(px+9),b(py+7+rs+by+armRaise),5,4,'#ffe0b0');
+  // 돋보기 손잡이
+  const mgx=b(px+16), mgy=b(py+3+rs+by+armRaise);
+  P(mgx,   mgy+4,3,9,'#c84820');
+  P(mgx+1, mgy+4,1,9,'#ff7050');
+  // 돋보기 원형 (inspecting 시 더 크게)
+  const mgR=inspecting?9:6;
+  cx.strokeStyle='#c84820'; cx.lineWidth=2.5;
+  cx.beginPath(); cx.arc(mgx+1,mgy,mgR,0,Math.PI*2); cx.stroke();
+  cx.globalAlpha=0.38; cx.fillStyle='#cceeff';
+  cx.beginPath(); cx.arc(mgx+1,mgy,mgR-1,0,Math.PI*2); cx.fill();
+  cx.globalAlpha=1;
+  cx.globalAlpha=0.75; cx.fillStyle='#fff';
+  cx.beginPath(); cx.arc(mgx-1,mgy-2,1.5,0,Math.PI*2); cx.fill();
+  cx.globalAlpha=1;
+  // inspecting 시 돋보기 렌즈 안에 반짝이는 빛
+  if(inspecting){
+    cx.globalAlpha=0.5+Math.abs(Math.sin(t*6))*0.4;
+    cx.fillStyle='#ffffff';
+    cx.beginPath(); cx.arc(mgx+2,mgy-1,2,0,Math.PI*2); cx.fill();
+    cx.globalAlpha=1;
+  }
+
+  // ── 목 (짧고 통통) ──
+  P(b(px-3),b(py-7+by),6,4,'#ffe0b0');
+
+  // ── 머리 (크고 동글동글 — 아이 비율) ──
+  P(b(px-10),b(py-24+by),20,18,'#ffe0b0');
+  P(b(px-10),b(py-24+by),3,18,'rgba(255,255,255,0.28)');
+  cx.strokeStyle='#c8946a'; cx.lineWidth=1;
+  cx.strokeRect(b(px-10),b(py-24+by),20,18);
+  // 볼터치 (귀여운 홍조)
+  cx.globalAlpha=0.22; cx.fillStyle='#ff8080';
+  cx.beginPath(); cx.ellipse(b(px-7),b(py-12+by),3,2,0,0,Math.PI*2); cx.fill();
+  cx.beginPath(); cx.ellipse(b(px+7),b(py-12+by),3,2,0,0,Math.PI*2); cx.fill();
+  cx.globalAlpha=1;
+
+  // ── 머리카락 (짧고 삐죽 — 중학생 스타일) ──
+  P(b(px-10),b(py-24+by),20,6,'#2a1800');   // 앞머리
+  P(b(px-12),b(py-22+by),4,10,'#2a1800');   // 옆머리 왼
+  P(b(px+8), b(py-22+by),4,10,'#2a1800');   // 옆머리 오른
+  // 삐죽 앞머리
+  P(b(px-6), b(py-30+by),3,8,'#2a1800');
+  P(b(px-1), b(py-31+by),3,9,'#2a1800');
+  P(b(px+4), b(py-29+by),3,7,'#2a1800');
+
+  // ── 눈 (크고 반짝 — 아이 눈) ──
+  const eyeX=facingLeft?-1:0;
+  // 흰자
+  P(b(px-7+eyeX),b(py-17+by),6,6,'#fff');
+  P(b(px+1+eyeX),b(py-17+by),6,6,'#fff');
+  // 눈동자
+  P(b(px-6+eyeX),b(py-16+by),4,4,'#2a1800');
+  P(b(px+2+eyeX),b(py-16+by),4,4,'#2a1800');
+  // 반짝이
+  P(b(px-5+eyeX),b(py-16+by),1,1,'#fff');
+  P(b(px+3+eyeX),b(py-16+by),1,1,'#fff');
+  // 눈썹 (짧고 굵)
+  P(b(px-7+eyeX),b(py-19+by),5,2,'#2a1800');
+  P(b(px+1+eyeX),b(py-19+by),5,2,'#2a1800');
+
+  cx.restore(); // 스핀 transform 복원
+}
+
+const TREES=[
+  [0.06,0.18,1.1],[0.14,0.14,0.85],[0.32,0.12,1.2],[0.58,0.10,0.9],
+  [0.72,0.15,1.0],[0.88,0.12,0.8],[0.04,0.55,0.9],[0.09,0.62,0.75],
+  [0.38,0.65,1.0],[0.60,0.70,0.85],[0.82,0.60,0.95],[0.92,0.68,0.8],
+  [0.47,0.20,0.9],[0.95,0.22,1.05],[0.25,0.16,0.7],[0.52,0.60,0.8],
+  // 추가 나무
+  [0.02,0.72,0.75],[0.43,0.88,0.70],
+  [0.85,0.78,0.70],[0.55,0.25,0.65],
+];
+const ROCKS=[[0.18,0.58],[0.65,0.20],[0.80,0.66],[0.28,0.78],
+  [0.50,0.45],[0.12,0.40],[0.90,0.50]];
+
+// [rx, ry, color]  색: 분홍/노랑/하양/보라/주황
+const FLOWERS=[
+  [0.07,0.72,'#ff88aa'],[0.20,0.75,'#ffffff'],
+  [0.35,0.83,'#ff88aa'],[0.50,0.80,'#ffee44'],
+  [0.63,0.79,'#cc88ff'],[0.76,0.83,'#ffffff'],
+  [0.89,0.70,'#ff9944'],[0.17,0.91,'#ff88aa'],
+  [0.48,0.65,'#cc88ff'],[0.73,0.90,'#ffee44'],
+  [0.87,0.87,'#ff88aa'],[0.32,0.62,'#ffffff'],
+];
+
+// [rx, ry]
+const BUSHES=[
+  [0.10,0.74],[0.45,0.70],[0.80,0.72],
+  [0.03,0.83],[0.57,0.88],[0.38,0.58],
+];
+
+// [rx, ry]
+const MUSHROOMS=[
+  [0.15,0.72],[0.67,0.74],[0.22,0.85],[0.91,0.76],
+];
+
+// 게임 화면용 꽃 그리기
+function drawFlower(x, y, col){
+  const b=Math.round;
+  // 그림자
+  cx.globalAlpha=0.12;
+  cx.beginPath(); cx.ellipse(x,y+2,5,2,0,0,Math.PI*2);
+  cx.fillStyle='#000'; cx.fill(); cx.globalAlpha=1;
+  // 줄기
+  P(b(x-1),b(y-12),2,13,'#3a9028');
+  P(b(x-1),b(y-12),1,13,'#58b840');
+  // 잎
+  P(b(x-5),b(y-7),5,2,'#3a9028');
+  P(b(x+1), b(y-9),5,2,'#3a9028');
+  // 꽃잎 (6방향, 4x4 블록)
+  const petals=[[-4,-15],[4,-15],[6,-11],[-6,-11],[0,-19],[-2,-11]];
+  petals.forEach(([dx,dy])=>P(b(x+dx),b(y+dy),4,4,col));
+  // 꽃술
+  P(b(x-2),b(y-13),4,4,'#fff060');
+  P(b(x-1),b(y-12),2,2,'#ffffff');
+}
+
+// 픽셀 덤불/수풀 그리기
+function drawBush(x, y){
+  const b=Math.round;
+  // 그림자
+  cx.globalAlpha=0.13;
+  cx.beginPath(); cx.ellipse(x,y+3,14,4,0,0,Math.PI*2);
+  cx.fillStyle='#000'; cx.fill(); cx.globalAlpha=1;
+  // 덤불 본체 (겹쳐진 동그란 블록들)
+  const cols=['#3a9828','#48b030','#58c840','#309020'];
+  // 아래쪽 넓은 층
+  P(b(x-14),b(y-4),28,10,cols[0]);
+  P(b(x-14),b(y-4),4,10,cols[3]);
+  // 가운데 층
+  P(b(x-11),b(y-10),22,8,cols[1]);
+  P(b(x-11),b(y-10),4,8,'rgba(255,255,255,0.08)');
+  // 위쪽 뾰족한 층
+  P(b(x-7), b(y-15),14,7,cols[2]);
+  // 하이라이트
+  P(b(x-9), b(y-9), 6,2,'rgba(255,255,200,0.20)');
+  P(b(x-4), b(y-14),4,2,'rgba(255,255,200,0.20)');
+  // 잔가지/풀잎 윗부분 삐죽
+  P(b(x-3),b(y-18),2,4,'#48b030');
+  P(b(x+2), b(y-17),2,3,'#3a9828');
+  P(b(x+6), b(y-16),2,3,'#48b030');
+}
+
+// 픽셀 버섯 그리기
+function drawMushroom(x, y){
+  const b=Math.round;
+  // 그림자
+  cx.globalAlpha=0.12;
+  cx.beginPath(); cx.ellipse(x,y+2,6,2,0,0,Math.PI*2);
+  cx.fillStyle='#000'; cx.fill(); cx.globalAlpha=1;
+  // 기둥 (하얀 줄기)
+  P(b(x-3),b(y-6), 6,7,'#f0ede0');
+  P(b(x-3),b(y-6), 2,7,'rgba(255,255,255,0.4)');
+  // 갓 (빨간 반원)
+  P(b(x-8),b(y-14),16,10,'#d83020');
+  P(b(x-6),b(y-16),12,4, '#d83020');
+  P(b(x-3),b(y-18),6,4,  '#d83020');
+  // 갓 하이라이트
+  P(b(x-6),b(y-16),4,3,'rgba(255,255,255,0.35)');
+  // 흰 점박이
+  P(b(x-4),b(y-13),3,3,'#ffffff');
+  P(b(x+2), b(y-15),3,3,'#ffffff');
+  P(b(x-1),b(y-11),2,2,'#ffffff');
+}
+
+// 풀밭 랜덤 풀잎 클러스터 (빌드시 한번 생성)
+let GRASS_TUFTS=null;
+function buildGrassTufts(){
+  GRASS_TUFTS=[];
+  // 미리 정해진 랜덤값 — 대각선 패턴 없이 자유롭게 분포
+  const pts=[
+    [0.03,0.72],[0.11,0.60],[0.17,0.53],
+    [0.22,0.68],[0.27,0.57],[0.31,0.93],
+    [0.36,0.50],[0.41,0.71],[0.46,0.95],
+    [0.51,0.62],[0.57,0.55],[0.62,0.67],
+    [0.67,0.52],[0.72,0.84],[0.77,0.70],
+    [0.82,0.63],[0.88,0.73],[0.93,0.82],
+    [0.05,0.47],[0.21,0.55],[0.43,0.44],
+    [0.53,0.51],[0.66,0.88],[0.75,0.46],
+    [0.90,0.65],[0.18,0.44],[0.35,0.60],
+    [0.50,0.47],[0.63,0.53],[0.78,0.67],
+    [0.07,0.62],[0.23,0.87],[0.45,0.76],
+    [0.64,0.82],[0.80,0.58],[0.47,0.52],
+  ];
+  const cols=['#68d848','#78e858','#58c038','#80f060','#70ec50','#50b830'];
+  pts.forEach(([rx,ry],i)=>{
+    if(ry>0.24&&ry<0.42) return; // 강 영역 스킵
+    GRASS_TUFTS.push([rx, ry, cols[i%cols.length]]);
+  });
+}
+
+// 풀 클러스터 그리기
+function drawGrassTuft(x,y,col){
+  const b=Math.round;
+  // 짧은 풀잎 2~3개
+  P(b(x-3),b(y-7),2,8,col);
+  P(b(x-3),b(y-7),1,8,'rgba(255,255,255,0.15)');
+  P(b(x+0), b(y-9),2,10,col);
+  P(b(x+3), b(y-6),2,7,col);
+  // 기저
+  P(b(x-4),b(y-1),10,2,'#3a9028');
+}
+
+function drawWorld(){
+  cx.clearRect(0,0,CW,CH);
+  if(!mapCols) buildMap();
+  if(!GRASS_TUFTS) buildGrassTufts();
+  for(let r=0;r<mapRows;r++) for(let c=0;c<mapCols;c++) drawTile(c,r);
+
+  // 풀 클러스터 (가장 아래 레이어)
+  GRASS_TUFTS.forEach(([rx,ry,col])=>drawGrassTuft(rx*CW,ry*CH,col));
+
+  // 덤불
+  BUSHES.forEach(([rx,ry])=>drawBush(rx*CW,ry*CH));
+
+  // 꽃
+  FLOWERS.forEach(([rx,ry,col])=>drawFlower(rx*CW,ry*CH,col));
+
+  // 버섯
+  MUSHROOMS.forEach(([rx,ry])=>drawMushroom(rx*CW,ry*CH));
+
+  // 나무
+  TREES.forEach(([rx,ry,s])=>drawTree(rx*CW,ry*CH,s*0.6));
+
+  // 바위
+  ROCKS.forEach(([rx,ry])=>{
+    P(rx*CW-8,ry*CH+4,16,4,'rgba(0,0,0,0.15)');
+    P(rx*CW-8,ry*CH-2,16,10,'#7a7060'); P(rx*CW-6,ry*CH-6,12,8,'#8a8070');
+    P(rx*CW-4,ry*CH-8,8,4,'#9a9080'); P(rx*CW-4,ry*CH-6,3,3,'#aaa090');
+  });
+
+  G.quests.forEach((q,i)=>drawBuilding(q,i));
+  drawPlayer();
+}
+
+// ═══════════════════════════════════════════
+// 플레이어 이동
+// ═══════════════════════════════════════════
+function updatePlayer(){
+  const p=G.player;
+  const d=dist(p.x,p.y,p.tx,p.ty);
+
+  if(d>0.003){
+    // ── 도트게임 이동: 고정 스텝 크기로 이동 (lerp 대신) ──
+    // 한 프레임에 이동할 최대 거리를 픽셀 단위로 고정
+    const STEP=0.005; // 약 3~4픽셀/프레임 → 천천히 걸어가는 느낌
+    const ratio=Math.min(STEP/d,1);
+    p.x+=( p.tx-p.x)*ratio;
+    p.y+=( p.ty-p.y)*ratio;
+  } else {
+    // 목적지 도착 → 위치 스냅
+    p.x=p.tx; p.y=p.ty;
+  }
+
+  p.x=clamp(p.x,0.04,0.96); p.y=clamp(p.y,0.18,0.92);
+  if(!G.popupLocked){
+    const nextQuest=G.quests.find(q=>!q.done);
+    if(nextQuest&&dist(p.x,p.y,nextQuest.x,nextQuest.y)<0.08){
+      if(!G.inspectTimer){
+        G.inspectTimer=setTimeout(()=>{
+          G.inspectTimer=null;
+          G.popupLocked=true;
+          openQuest(nextQuest.id);
+        },1200);
+      }
+    } else {
+      if(G.inspectTimer){ clearTimeout(G.inspectTimer); G.inspectTimer=null; }
+    }
+
+    // 잠긴 퀘스트(순서 안된 것)에 가까이 가면 안내 메시지
+    const lockedNear=G.quests.find(q=>!q.done&&q!==nextQuest&&dist(p.x,p.y,q.x,q.y)<0.08);
+    if(lockedNear){
+      const nextNum=G.quests.indexOf(nextQuest)+1;
+      $('tip').textContent=`먼저 '${nextQuest.title}' 퀘스트를 완료하세요!`;
+    }
+  }
+}
+
+// 터치/클릭으로 이동 (캔버스)
+function canvasToNorm(clientX,clientY){
+  const r=cv.getBoundingClientRect();
+  return { x:clamp((clientX-r.left)/r.width,0.03,0.97), y:clamp((clientY-r.top)/r.height,0.18,0.94) };
+}
+
+cv.addEventListener('touchstart',e=>{
+  e.preventDefault();
+  if(G.screen!=='game') return;
+  const t=e.touches[0];
+  const p=canvasToNorm(t.clientX,t.clientY);
+  const near=dist(p.x,p.y,G.player.x,G.player.y)<0.10;
+  if(near) G.drag=true;
+  else{ G.player.tx=p.x; G.player.ty=p.y; }
+},{passive:false});
+
+cv.addEventListener('touchmove',e=>{
+  e.preventDefault();
+  if(!G.drag||G.screen!=='game') return;
+  const t=e.touches[0];
+  const p=canvasToNorm(t.clientX,t.clientY);
+  G.player.x=p.x; G.player.y=p.y; G.player.tx=p.x; G.player.ty=p.y;
+},{passive:false});
+
+cv.addEventListener('touchend',e=>{ e.preventDefault(); G.drag=false; },{passive:false});
+
+cv.addEventListener('mousedown',e=>{
+  if(G.screen!=='game') return;
+  const p=canvasToNorm(e.clientX,e.clientY);
+  if(dist(p.x,p.y,G.player.x,G.player.y)<0.10) G.drag=true;
+  else{ G.player.tx=p.x; G.player.ty=p.y; }
+});
+cv.addEventListener('mousemove',e=>{ if(!G.drag||G.screen!=='game') return; const p=canvasToNorm(e.clientX,e.clientY); G.player.x=p.x; G.player.y=p.y; G.player.tx=p.x; G.player.ty=p.y; });
+window.addEventListener('mouseup',()=>{ G.drag=false; });
+
+// 키보드
+window.addEventListener('keydown',e=>{
+  if(G.screen!=='game') return;
+  const s=0.025;
+  if(e.key==='ArrowLeft') G.player.tx=clamp(G.player.tx-s,0.04,0.96);
+  if(e.key==='ArrowRight') G.player.tx=clamp(G.player.tx+s,0.04,0.96);
+  if(e.key==='ArrowUp') G.player.ty=clamp(G.player.ty-s,0.18,0.92);
+  if(e.key==='ArrowDown') G.player.ty=clamp(G.player.ty+s,0.18,0.92);
+});
+
+// ═══════════════════════════════════════════
+// HUD 갱신
+// ═══════════════════════════════════════════
+function refreshHUD(){
+  const next=G.quests.find(q=>!q.done);
+  $('goalText').textContent=next?`'${next.title}' 지점으로 이동하세요.`:'모든 퀘스트 완료!';
+  const fr=$('fragRow'); fr.innerHTML='';
+  for(let i=0;i<4;i++){ const d=document.createElement('div'); d.className='frag'+(i<G.completedCount?' on':''); fr.appendChild(d); }
+  const qc=$('questChips'); qc.innerHTML='';
+  G.quests.forEach(q=>{ const d=document.createElement('div'); d.className='qchip'+(q.done?' done':''); d.innerHTML=`<span>${q.title}</span><span>${q.done?'✅':'⬜'}</span>`; qc.appendChild(d); });
+}
+
+// ═══════════════════════════════════════════
+// 모달
+// ═══════════════════════════════════════════
+const overlay=$('overlay'), modalBox=$('modalBox');
+
+function openModal(html){
+  modalBox.innerHTML=html;
+  overlay.classList.add('show');
+  stopBGM();
+  playQuizBGM();
+}
+function closeModal(){
+  overlay.classList.remove('show');
+  modalBox.innerHTML='';
+  stopQuizBGM();
+}
+function dismissModal(){
+  closeModal();
+  G.popupLocked=false;
+}
+function overlayClick(e){ if(e.target===overlay){ dismissModal(); } }
+
+function modalHead(title,sub){
+  return '<div class="modal-head"><div><div class="modal-title">'+title+'</div>'+(sub?'<div class="modal-sub">'+sub+'</div>':'')+
+    '</div><button class="btn-close" ontouchstart="location.reload()" onclick="location.reload()">✕</button></div>';
+}
+
+// ═══════════════════════════════════════════
+// 퀘스트 시스템
+// ═══════════════════════════════════════════
+function openQuest(id){
+  const q=G.quests.find(x=>x.id===id);
+  $('tip').textContent=`${q.npc}와 만났습니다!`;
+  openModal(`
+    ${modalHead(q.title,q.sub)}
+    <div class="npc-box"><strong>${q.npc}</strong>: 안녕하세요! 이곳의 기록이 흐트러졌어요.<br><strong>${q.title.replace(/^Q\d\.\s/,'')}</strong> 미션을 해결하면 역사 기록 조각을 되찾을 수 있어요.</div>
+    <div class="modal-btns">
+      <button class="btn-modal-ok" onclick="startQuest('${id}')">🚀 미션 시작</button>
+    </div>
+  `);
+}
+
+function startQuest(id){ renderQ(id); }
+
+function renderQ(id){
+  const q=G.quests.find(x=>x.id===id);
+  const item=q.qs[q.step];
+  if(!item){ completeQuest(id); return; }
+
+  const leads={
+    q1:['나라의 시작에 대한 단서를 찾아야 합니다.','어느 위치에서 성장했는지 확인해 봅시다.','남쪽 지역의 나라들을 떠올려 보세요.'],
+    q2:['왕이 나라를 잘 다스리려면 무엇이 필요할까요?','왕권의 뜻을 생각해 봅시다.','나라를 체계적으로 다스리는 흐름을 정리해 봅시다.'],
+    q3:['한강 유역이 왜 중요했는지 떠올려 보세요.','지도에서 한강 유역의 중심을 찾아 보세요.','전성기 나라들은 왜 중요 지역을 차지하려 했을까요?'],
+    q4:['유물을 보면 어느 나라의 특징인지 짐작할 수 있어요.','유물은 과거 사람들의 무엇을 알려 줄까요?']
+  };
+  const lead=(leads[id]||[])[q.step]||'문제를 풀어 보세요.';
+  const head=modalHead(q.title,`${q.npc} · ${q.step+1}/${q.qs.length}`);
+  const npc=`<div class="npc-box"><strong>${q.npc}</strong>: ${lead}</div>`;
+
+  if(item.type==='choice'||item.type==='truefalse'||item.type==='order'){
+    const choices=item.type==='truefalse'?['참','거짓']:item.c;
+    openModal(`${head}${npc}
+      <div class="q-title">${item.q}</div>
+      <div class="choices">
+        ${choices.map((c,i)=>`<button class="choice-btn" onclick="answerChoice('${id}',${i})">${c}</button>`).join('')}
+      </div>
+      <div class="feedback" id="fb"></div>
+    `);
+  } else if(item.type==='map'){
+    openModal(`${head}${npc}
+      <div class="q-title">${item.q}</div>
+      <div class="minimap" id="miniMap">
+        <img src="data:image/png;base64,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" style="width:100%;height:100%;object-fit:cover;display:block;background:#fff;"/>
+        <!-- 북쪽: 한반도 상단 경계 바로 위 -->
+        <button class="region-btn" style="left:42%;top:5%;font-size:12px;padding:5px 10px;min-height:34px;" onclick="answerMap('${id}','north')">북쪽</button>
+        <!-- 서쪽: 한반도 서쪽 해안 바로 옆 -->
+        <button class="region-btn" style="left:14%;top:40%;font-size:12px;padding:5px 10px;min-height:34px;" onclick="answerMap('${id}','west')">서쪽</button>
+        <!-- 가운데: 한강 유역 -->
+        <button class="region-btn" style="left:32%;top:60%;font-size:12px;padding:5px 10px;min-height:34px;" onclick="answerMap('${id}','middle')">가운데</button>
+        <!-- 동쪽: 동해안 바로 옆 -->
+        <button class="region-btn" style="left:62%;top:52%;font-size:12px;padding:5px 10px;min-height:34px;" onclick="answerMap('${id}','east')">동쪽</button>
+        <!-- 남쪽: 한반도 남단 바로 아래 -->
+        <button class="region-btn" style="left:38%;top:80%;font-size:12px;padding:5px 10px;min-height:34px;" onclick="answerMap('${id}','south')">남쪽</button>
+      </div>
+      <div class="feedback" id="fb"></div>
+    `);
+  } else if(item.type==='match'){
+    const shuffledPairs=shuffle(item.pairs);
+    openModal(`${head}${npc}
+      <div class="q-title">${item.q}</div>
+      <div class="match-grid">
+        <div>
+          <h4>유물 카드</h4>
+          <div id="cardList">
+            ${shuffledPairs.map(p=>`<div class="card-item" id="card_${p.label}" onclick="selectCard('${p.label}')">${p.label}</div>`).join('')}
+          </div>
+        </div>
+        <div>
+          <h4>나라 상자</h4>
+          <div id="zoneList">
+            ${item.targets.map(t=>`<div class="zone-item" id="zone_${t}" onclick="assignZone('${id}','${t}')">${t}</div>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div class="modal-btns">
+        <button class="btn-modal-ok" onclick="checkMatch('${id}')" ontouchstart="checkMatch('${id}')">✅ 정답 확인</button>
+        <button class="btn-modal-sub" onclick="resetMatch('${id}')" ontouchstart="resetMatch('${id}')">🔄 다시 놓기</button>
+      </div>
+      <div class="feedback" id="fb"></div>
+    `);
+  }
+}
+
+let selectedCard=null, matchAssign={};
+
+function selectCard(label){
+  // 이미 used 상태면 무시
+  const el=document.getElementById('card_'+label);
+  if(!el||el.classList.contains('used')) return;
+  // 기존 선택 해제
+  document.querySelectorAll('.card-item').forEach(c=>c.classList.remove('selected'));
+  if(selectedCard===label){ selectedCard=null; return; }
+  selectedCard=label;
+  el.classList.add('selected');
+}
+
+function assignZone(id,country){
+  if(!selectedCard) return;
+  const q=G.quests.find(x=>x.id===id);
+  const item=q.qs[q.step];
+  // 이미 이 카드가 다른 존에 있으면 해제
+  Object.keys(matchAssign).forEach(k=>{ if(matchAssign[k]===selectedCard){ delete matchAssign[k]; const z=document.getElementById('zone_'+k); if(z){z.textContent=k; z.classList.remove('filled');} } });
+  // 이 존에 기존 카드 있으면 복구
+  if(matchAssign[country]){
+    const old=matchAssign[country];
+    const oc=document.getElementById('card_'+old); if(oc){oc.classList.remove('used');}
+  }
+  matchAssign[country]=selectedCard;
+  const zEl=document.getElementById('zone_'+country);
+  if(zEl){ zEl.textContent=`${country} ← ${selectedCard}`; zEl.classList.add('filled'); }
+  const cEl=document.getElementById('card_'+selectedCard);
+  if(cEl){ cEl.classList.remove('selected'); cEl.classList.add('used'); }
+  selectedCard=null;
+}
+
+function resetMatch(id){
+  matchAssign={};
+  const q=G.quests.find(x=>x.id===id);
+  const item=q.qs[q.step];
+  item.targets.forEach(t=>{ const z=document.getElementById('zone_'+t); if(z){z.textContent=t; z.classList.remove('filled');} });
+  document.querySelectorAll('.card-item').forEach(c=>{ c.classList.remove('used','selected'); });
+  selectedCard=null;
+}
+
+function checkMatch(id){
+  const q=G.quests.find(x=>x.id===id);
+  const item=q.qs[q.step];
+  if(item.targets.some(t=>!matchAssign[t])){
+    showFB(false,'아직 비어 있는 나라 상자가 있어요. 모두 연결해 보세요.'); return;
+  }
+  const ok=item.pairs.every(p=>matchAssign[p.answer]===p.label);
+  showFB(ok,item.fb,()=>{ matchAssign={}; selectedCard=null; q.step++; renderQ(id); });
+}
+
+function answerChoice(id,idx){
+  const q=G.quests.find(x=>x.id===id);
+  const item=q.qs[q.step];
+  let ok;
+  if(item.type==='truefalse') ok=(idx===0)===item.a;
+  else ok=idx===item.a;
+  showFB(ok,item.fb,()=>{ q.step++; renderQ(id); });
+}
+
+function answerMap(id,region){
+  const q=G.quests.find(x=>x.id===id);
+  const item=q.qs[q.step];
+  const ok=region===item.a;
+  showFB(ok,item.fb,()=>{ q.step++; renderQ(id); });
+}
+
+function showFB(ok,text,onOk){
+  const fb=document.getElementById('fb');
+  if(!fb) return;
+  fb.className='feedback '+(ok?'ok':'ng');
+  fb.textContent=ok?`⭕ 정답! ${text}`:'❌ 다시 생각해 보세요. 힌트: 단원의 핵심 내용을 떠올려 보세요.';
+  if(ok){ playOK(); if(onOk) setTimeout(onOk,900); }
+  else playNG();
+}
+
+function completeQuest(id){
+  const q=G.quests.find(x=>x.id===id);
+  q.done=true; G.completedCount++;
+  refreshHUD(); sparkles();
+  stopQuizBGM();
+  // 팡파레 화면 2.5초 → 그 후 완료 팝업
+  showFanfare(q.title, G.completedCount, ()=>{
+    openModal(`
+      ${modalHead(q.title,'퀘스트 완료! 🎉')}
+      <div class="npc-box"><strong>${q.npc}</strong>: 훌륭해요! 역사 기록 조각 하나가 복원되었습니다!<br>지금까지 모은 기록 조각: <strong>${G.completedCount} / 4</strong> ✦</div>
+      <div class="modal-btns">
+        <button class="btn-modal-ok" onclick="continueGame()" ontouchstart="continueGame()">🗺️ 계속 탐험하기</button>
+      </div>
+    `);
+  });
+}
+
+function continueGame(){
+  closeModal();
+  G.popupLocked=false;
+  if(G.completedCount>=4) setTimeout(showResult,300);
+  else $('tip').textContent='좋아요! 다음 퀘스트 지점을 찾아보세요.';
+}
+
+function showResult(){
+  stopBGM(); stopQuizBGM();
+  showScreen('result'); sparkles();
+}
+
+function sparkles(){
+  for(let i=0;i<12;i++){
+    const s=document.createElement('div'); s.className='sparkle';
+    s.style.left=(20+Math.random()*60)+'vw'; s.style.top=(30+Math.random()*40)+'vh';
+    s.style.animationDelay=(Math.random()*0.3)+'s';
+    document.body.appendChild(s); setTimeout(()=>s.remove(),1100);
+  }
+}
+
+// ═══════════════════════════════════════════
+// 조작 방법 팝업
+// ═══════════════════════════════════════════
+function showHelp(){
+  openModal(`
+    ${modalHead('조작 방법 안내')}
+    <div class="npc-box">
+      1. 화면을 터치(또는 클릭)하면 그 위치로 캐릭터가 이동해요.<br>
+      2. 캐릭터를 직접 드래그해서 움직일 수도 있어요.<br>
+      3. 반짝이는 건물 가까이 가면 퀘스트가 시작돼요.<br>
+      4. 문제를 모두 풀면 역사 기록 조각이 복원됩니다!<br><br>
+      <strong>유물 연결 문제</strong>: 왼쪽 카드를 탭해 선택(주황 테두리) 후, 오른쪽 나라 상자를 탭하면 연결돼요.
+    </div>
+    <div class="modal-btns">
+      <button class="btn-modal-ok" onclick="closeModal()" ontouchstart="closeModal()">확인</button>
+    </div>
+  `);
+}
+
+// ═══════════════════════════════════════════
+// 게임 시작 / 재시작
+// ═══════════════════════════════════════════
+let _lastAction=0;
+function _debounce(fn){
+  const now=Date.now();
+  if(now-_lastAction<600) return; // 600ms 내 중복 실행 방지
+  _lastAction=now;
+  fn();
+}
+
+function startGame(){
+  _debounce(()=>{
+  getAC();
+  stopBGM(); stopTitleBg();
+  // 리셋
+  G.completedCount=0; G.popupLocked=false; G.drag=false;
+  if(G.inspectTimer){ clearTimeout(G.inspectTimer); G.inspectTimer=null; }
+  G.inspectStartT=null;
+  G.player={x:0.12,y:0.78,tx:0.12,ty:0.78}; G.walkTimer=0;
+  G.quests.forEach(q=>{q.done=false;q.step=0;});
+  matchAssign={}; selectedCard=null;
+  showScreen('game');
+  resizeCv(); refreshHUD();
+  $('tip').textContent='화면을 터치해 캐릭터를 이동하세요';
+  }); // end debounce
+}
+
+function restartGame(){
+  showScreen('start');
+  setTimeout(()=>{ startTitleBg(); if(!G.muted) playBGM(); },100);
+}
+
+// ═══════════════════════════════════════════
+// 메인 루프
+// ═══════════════════════════════════════════
+function loop(){
+  if(G.screen==='game'){ updatePlayer(); drawWorld(); }
+  requestAnimationFrame(loop);
+}
+
+// ═══════════════════════════════════════════
+// 초기화
+// ═══════════════════════════════════════════
+window.addEventListener('resize',()=>{ if(G.screen==='game') resizeCv(); });
+
+// 시작화면 배경 시작
+startTitleBg();
+
+// BGM: 첫 터치/클릭 시작 (iOS 정책)
+function tryStartBGM(){
+  getAC();
+  if(!G.muted && G.screen==='start' && !bgmOn) playBGM();
+}
+document.addEventListener('touchend', tryStartBGM, {once:true, passive:true});
+document.addEventListener('click', tryStartBGM, {once:true});
+
+loop();
+</script>
+</body>
+</html>
